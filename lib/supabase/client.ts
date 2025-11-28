@@ -1,14 +1,18 @@
 import { createBrowserClient } from "@supabase/ssr"
 
 export function createClient() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ""
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
+  // Return null immediately if credentials are missing - don't try to create client
   if (!supabaseUrl || !supabaseAnonKey) {
-    console.warn("[v0] Supabase credentials not configured")
-    // Return a mock client that won't crash
-    return null as any
+    return null
   }
 
-  return createBrowserClient(supabaseUrl, supabaseAnonKey)
+  try {
+    return createBrowserClient(supabaseUrl, supabaseAnonKey)
+  } catch (error) {
+    console.warn("[v0] Failed to create Supabase client")
+    return null
+  }
 }

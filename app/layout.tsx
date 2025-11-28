@@ -42,6 +42,63 @@ export default function RootLayout({
         {children}
         <Analytics />
         <GlobalModalProvider />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.addEventListener('unhandledrejection', function(event) {
+                if (!event) return;
+                
+                try {
+                  const errorStr = JSON.stringify(event.reason) || String(event.reason) || '';
+                  const errorMessage = event.reason?.message || '';
+                  const errorName = event.reason?.name || '';
+                  const errorCode = event.reason?.code || '';
+                  
+                  const walletKeywords = [
+                    'MetaMask', 'metamask', 'METAMASK',
+                    'ethereum', 'Ethereum', 'ETHEREUM',
+                    'wallet', 'Wallet', 'WALLET',
+                    'Web3', 'web3', 'WEB3',
+                    'crypto', 'Crypto', 'CRYPTO',
+                    'connect', 'Connect', 'CONNECT',
+                    'provider', 'Provider', 'PROVIDER'
+                  ];
+                  
+                  const shouldSuppress = walletKeywords.some(keyword => 
+                    errorStr.toLowerCase().includes(keyword.toLowerCase()) ||
+                    errorMessage.toLowerCase().includes(keyword.toLowerCase()) ||
+                    errorName.toLowerCase().includes(keyword.toLowerCase()) ||
+                    String(errorCode).toLowerCase().includes(keyword.toLowerCase())
+                  );
+                  
+                  if (shouldSuppress) {
+                    event.preventDefault();
+                    console.debug('[EVO STUDENT] Wallet extension error suppressed:', errorStr.substring(0, 100));
+                    return false;
+                  }
+                } catch (e) {
+                  const fullError = String(event.reason || '');
+                  if (fullError.match(/(meta|wallet|ethereum|web3|crypto)/i)) {
+                    event.preventDefault();
+                    return false;
+                  }
+                }
+              });
+              
+              const originalError = console.error;
+              console.error = function(...args) {
+                const errorText = args.join(' ').toLowerCase();
+                if (errorText.includes('metamask') || 
+                    errorText.includes('ethereum') || 
+                    errorText.includes('wallet') ||
+                    errorText.includes('web3')) {
+                  return;
+                }
+                originalError.apply(console, args);
+              };
+            `,
+          }}
+        />
       </body>
     </html>
   )

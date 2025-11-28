@@ -25,6 +25,7 @@ export default function LibraryGame() {
   const [books, setBooks] = useState<Position[]>([])
   const [walls, setWalls] = useState<Position[]>([])
   const [timeLeft, setTimeLeft] = useState(45)
+  const [totalBooks, setTotalBooks] = useState(8)
 
   useEffect(() => {
     const loadState = async () => {
@@ -84,6 +85,7 @@ export default function LibraryGame() {
 
     setWalls(newWalls)
     setBooks(newBooks)
+    setTotalBooks(newBooks.length)
   }
 
   const startGame = () => {
@@ -111,14 +113,28 @@ export default function LibraryGame() {
     setPlaying(false)
 
     if (gameState) {
-      const moneyEarned = Math.floor(score * 3)
-      const exp = Math.floor(score / 2)
+      const booksCollected = score
+      const allBooksCollected = booksCollected === totalBooks
+
+      let moneyEarned = Math.floor(booksCollected * 5)
+      let exp = Math.floor(booksCollected * 3)
+
+      if (allBooksCollected) {
+        moneyEarned += 50
+        exp += 25
+      }
+
+      if (allBooksCollected && timeLeft > 0) {
+        const speedBonus = Math.floor(timeLeft * 2)
+        moneyEarned += speedBonus
+        exp += Math.floor(timeLeft / 2)
+      }
 
       let updated = addMoney(gameState, moneyEarned)
       updated = addExperience(updated, exp)
       updated = updateStats(updated, {
-        happiness: Math.min(100, updated.stats.happiness + 5),
-        stress: Math.max(0, updated.stats.stress - 3),
+        happiness: Math.min(100, updated.stats.happiness + (allBooksCollected ? 10 : 5)),
+        stress: Math.max(0, updated.stats.stress - (allBooksCollected ? 5 : 3)),
       })
 
       if (score > updated.minigameHighScores.library) {
@@ -134,7 +150,15 @@ export default function LibraryGame() {
       setGameState(updated)
       await saveGameState(updated)
 
-      showSuccess(`Книг зібрано: ${score}\nЗаробив: ${moneyEarned} грн\nДосвід: +${exp}`, "Гру завершено!")
+      let message = `Книг зібрано: ${booksCollected}/${totalBooks}\nЗаробив: ${moneyEarned} грн\nДосвід: +${exp}`
+      if (allBooksCollected) {
+        message = `🎉 ВСІ КНИГИ ЗІБРАНО! 🎉\n\n${message}\n\n✨ Бонус за виконання: +50 грн, +25 XP`
+        if (timeLeft > 0) {
+          message += `\n⚡ Бонус за швидкість: +${Math.floor(timeLeft * 2)} грн`
+        }
+      }
+
+      showSuccess(message, allBooksCollected ? "Ідеально!" : "Гру завершено!")
     }
   }
 
@@ -152,9 +176,17 @@ export default function LibraryGame() {
 
       const bookIndex = books.findIndex((b) => b.x === newX && b.y === newY)
       if (bookIndex !== -1) {
-        setBooks(books.filter((_, i) => i !== bookIndex))
-        setScore(score + 1)
+        const newBooks = books.filter((_, i) => i !== bookIndex)
+        setBooks(newBooks)
+        const newScore = score + 1
+        setScore(newScore)
         setTimeLeft(timeLeft + 2)
+
+        if (newBooks.length === 0) {
+          setTimeout(() => {
+            endGame()
+          }, 500)
+        }
       }
     },
     [playing, playerPos, walls, books, score, timeLeft],
@@ -222,7 +254,16 @@ export default function LibraryGame() {
                   <li>Збирай всі книги в лабіринті</li>
                   <li>Уникай стін (темні клітинки)</li>
                   <li>Кожна книга дає +2 секунди</li>
-                  <li>Зібери якомога більше до закінчення часу</li>
+                  <li>Зібери всі 8 книг якомога швидше для максимальних нагород!</li>
+                </ul>
+              </div>
+
+              <div className="bg-accent/10 p-4 rounded-lg space-y-2">
+                <h3 className="font-bold text-accent-foreground">💰 Нагороди:</h3>
+                <ul className="text-sm space-y-1">
+                  <li>📚 За кожну книгу: +5 грн, +3 XP</li>
+                  <li>🎯 За збір всіх книг: +50 грн, +25 XP</li>
+                  <li>⚡ Бонус швидкості: +2 грн за кожну залишену секунду</li>
                 </ul>
               </div>
 
@@ -260,7 +301,11 @@ export default function LibraryGame() {
             <div className="text-sm text-muted-foreground">Книги</div>
           </div>
           <div className="text-center flex-1">
-            <div className="text-3xl font-bold text-accent-foreground">{books.length}</div>
+            <div
+              className={`text-3xl font-bold ${books.length === 0 ? "text-success animate-pulse" : "text-accent-foreground"}`}
+            >
+              {books.length}
+            </div>
             <div className="text-sm text-muted-foreground">Залишилось</div>
           </div>
           <div className="text-center flex-1">
@@ -279,7 +324,6 @@ export default function LibraryGame() {
                 position: "relative",
               }}
             >
-              {/* Grid */}
               {Array.from({ length: GRID_SIZE }).map((_, y) =>
                 Array.from({ length: GRID_SIZE }).map((_, x) => (
                   <div
@@ -295,7 +339,6 @@ export default function LibraryGame() {
                 )),
               )}
 
-              {/* Walls */}
               {walls.map((wall, i) => (
                 <div
                   key={`wall-${i}`}
@@ -309,7 +352,6 @@ export default function LibraryGame() {
                 />
               ))}
 
-              {/* Books */}
               {books.map((book, i) => (
                 <div
                   key={`book-${i}`}
@@ -325,7 +367,6 @@ export default function LibraryGame() {
                 </div>
               ))}
 
-              {/* Player */}
               <div
                 className="absolute bg-primary rounded-full transition-all duration-150 flex items-center justify-center text-xl"
                 style={{
@@ -341,7 +382,6 @@ export default function LibraryGame() {
           </div>
         </GameCard>
 
-        {/* Mobile controls */}
         <div className="mt-4 grid grid-cols-3 gap-2 max-w-xs mx-auto">
           <div />
           <Button onClick={() => movePlayer(0, -1)} variant="outline" size="lg">

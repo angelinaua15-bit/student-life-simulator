@@ -30,8 +30,13 @@ import {
   Calendar,
   Activity,
   Target,
+  Copy,
+  Check,
+  QrCode,
+  Award as IdCard,
 } from "lucide-react"
 import Link from "next/link"
+import { copyPlayerId } from "@/lib/player-id-system"
 
 const AVATAR_OPTIONS = [
   { id: "avatar-1", emoji: "😎", name: "Крутий" },
@@ -55,6 +60,8 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState(false)
   const [avatarDialogOpen, setAvatarDialogOpen] = useState(false)
+  const [qrDialogOpen, setQrDialogOpen] = useState(false)
+  const [copied, setCopied] = useState(false)
 
   // Edit form state
   const [editName, setEditName] = useState("")
@@ -118,6 +125,17 @@ export default function ProfilePage() {
     showSuccess("Аватар змінено!", "Успіх")
   }
 
+  const handleCopyId = async () => {
+    if (!gameState?.playerId) return
+
+    const success = await copyPlayerId(gameState.playerId)
+    if (success) {
+      setCopied(true)
+      showSuccess("ID скопійовано!", "Успіх")
+      setTimeout(() => setCopied(false), 2000)
+    }
+  }
+
   if (loading || !gameState) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -177,6 +195,59 @@ export default function ProfilePage() {
 
           {/* Profile Tab */}
           <TabsContent value="profile" className="space-y-6 animate-fade-in">
+            <Card className="overflow-hidden bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/5 border-2">
+              <div className="px-6 py-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
+                      <IdCard className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold">Мій унікальний ID</h3>
+                      <p className="text-sm text-muted-foreground">Поділись з друзями</p>
+                    </div>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setQrDialogOpen(true)}
+                    className="rounded-full hover:scale-105 transition-transform"
+                  >
+                    <QrCode className="w-4 h-4 mr-2" />
+                    QR-код
+                  </Button>
+                </div>
+
+                <div className="relative group">
+                  <div className="flex items-center justify-between p-4 rounded-2xl bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-pink-500/10 border-2 border-primary/20 hover:border-primary/40 transition-all backdrop-blur-sm">
+                    <div className="flex-1">
+                      <p className="text-3xl font-mono font-bold tracking-wider bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+                        {gameState.playerId || "STU-XXXXX-XXXXX"}
+                      </p>
+                    </div>
+                    <Button
+                      size="lg"
+                      onClick={handleCopyId}
+                      className="rounded-full px-6 shadow-lg hover:scale-105 transition-all bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
+                    >
+                      {copied ? (
+                        <>
+                          <Check className="w-5 h-5 mr-2 animate-scale-in" />
+                          Скопійовано!
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-5 h-5 mr-2" />
+                          Копіювати
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-pink-500/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity -z-10" />
+                </div>
+              </div>
+            </Card>
+
             <Card className="overflow-hidden">
               <div className="h-32 bg-gradient-to-r from-primary via-secondary to-accent animate-gradient"></div>
               <div className="px-6 pb-6">
@@ -619,6 +690,41 @@ export default function ProfilePage() {
                 <span className="text-xs font-medium text-center">{avatar.name}</span>
               </button>
             ))}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* QR Code Dialog */}
+      <Dialog open={qrDialogOpen} onOpenChange={setQrDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-2xl flex items-center gap-2">
+              <QrCode className="w-6 h-6 text-primary" />
+              QR-код мого ID
+            </DialogTitle>
+            <DialogDescription>Інші гравці можуть відсканувати цей код щоб додати тебе в друзі</DialogDescription>
+          </DialogHeader>
+
+          <div className="py-6 flex flex-col items-center gap-6">
+            <div className="relative group">
+              <div className="w-64 h-64 rounded-3xl bg-white p-4 shadow-2xl flex items-center justify-center border-2 border-primary/20">
+                <div className="text-center space-y-4">
+                  <div className="w-48 h-48 bg-gradient-to-br from-blue-100 to-purple-100 rounded-2xl flex items-center justify-center">
+                    <QrCode className="w-32 h-32 text-primary/30" />
+                  </div>
+                  <p className="font-mono text-sm font-bold text-primary">{gameState.playerId}</p>
+                </div>
+              </div>
+              <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 blur-2xl opacity-50 -z-10" />
+            </div>
+
+            <div className="w-full space-y-2">
+              <Button onClick={handleCopyId} className="w-full rounded-full" size="lg">
+                <Copy className="w-4 h-4 mr-2" />
+                Копіювати ID
+              </Button>
+              <p className="text-xs text-center text-muted-foreground">Твій унікальний код: {gameState.playerId}</p>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

@@ -2,18 +2,22 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { loadGameState, type GameState } from "@/lib/game-state"
+import { loadGameState, saveGameState, type GameState } from "@/lib/game-state"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, Gift, Lock, CheckCircle } from "lucide-react"
 import Link from "next/link"
 import { RARITY_COLORS, RARITY_GLOW, type Reward } from "@/lib/rewards-data"
+import confetti from "canvas-confetti"
+import { useGameModal } from "@/lib/use-game-modal"
+import { Package } from "lucide-react" // Declare the Package variable
 
 export default function RewardsPage() {
   const router = useRouter()
   const [gameState, setGameState] = useState<GameState | null>(null)
   const [rewards, setRewards] = useState<Reward[]>([])
   const [loading, setLoading] = useState(true)
+  const { showSuccess, showConfirm } = useGameModal()
 
   useEffect(() => {
     loadData()
@@ -87,6 +91,77 @@ export default function RewardsPage() {
     return "locked"
   }
 
+  async function claimReward(level: number, reward: Reward) {
+    if (!gameState) return
+
+    showConfirm(
+      `Забрати нагороду за рівень ${level}?\n\n${getRewardIcon(reward.rewardType)} ${reward.rewardName}\n${reward.rewardDescription}`,
+      async () => {
+        const updatedState = { ...gameState }
+
+        // Remove from unclaimed rewards
+        updatedState.unclaimedRewards = (updatedState.unclaimedRewards || []).filter((l) => l !== level)
+
+        // Apply reward based on type
+        switch (reward.rewardType) {
+          case "coins":
+            updatedState.stats.money += reward.rewardValue
+            break
+
+          case "skin":
+            // Store skin ID with prefix for easy filtering
+            const skinId = `skin_${reward.rewardValue}`
+            if (!updatedState.inventory.includes(skinId)) {
+              updatedState.inventory.push(skinId)
+            }
+            break
+
+          case "booster":
+            // Store booster as a structured object in inventory
+            const boosterId = `booster_${reward.rewardValue.type}`
+            if (!updatedState.inventory.find((item) => typeof item === "string" && item === boosterId)) {
+              updatedState.inventory.push(boosterId)
+            }
+            break
+
+          case "badge":
+            if (!updatedState.achievements.includes(reward.rewardValue)) {
+              updatedState.achievements.push(reward.rewardValue)
+            }
+            break
+
+          case "effect":
+            // Store effect with prefix
+            const effectId = `effect_${reward.rewardValue}`
+            if (!updatedState.inventory.includes(effectId)) {
+              updatedState.inventory.push(effectId)
+            }
+            break
+
+          case "location":
+            if (!updatedState.completedEvents.includes(reward.rewardValue)) {
+              updatedState.completedEvents.push(reward.rewardValue)
+            }
+            break
+        }
+
+        await saveGameState(updatedState)
+        setGameState(updatedState)
+
+        // Show confetti
+        confetti({
+          particleCount: 150,
+          spread: 100,
+          origin: { y: 0.6 },
+          colors: ["#8b5cf6", "#06b6d4", "#fbbf24"],
+        })
+
+        showSuccess("Нагороду отримано!", `${reward.rewardName} додано до вашого інвентаря!`)
+      },
+      "Підтвердження",
+    )
+  }
+
   if (loading || !gameState) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -103,6 +178,13 @@ export default function RewardsPage() {
             <Button variant="outline" size="sm">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Назад
+            </Button>
+          </Link>
+
+          <Link href="/game/inventory">
+            <Button variant="outline" size="sm" className="bg-gradient-to-r from-purple-500 to-pink-500 text-white">
+              <Package className="w-4 h-4 mr-2" />
+              Інвентар
             </Button>
           </Link>
         </div>
@@ -162,7 +244,7 @@ export default function RewardsPage() {
                     <p className="text-sm text-white/80 mb-4">{reward.rewardDescription}</p>
 
                     {/* Rarity badge */}
-                    <div className="inline-block px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm">
+                    <div className="inline-block px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm mb-4">
                       <span className="text-xs font-bold uppercase text-white">
                         {reward.rarity === "common" && "⚪ Звичайний"}
                         {reward.rarity === "rare" && "🔵 Рідкісний"}
@@ -170,6 +252,17 @@ export default function RewardsPage() {
                         {reward.rarity === "legendary" && "🟡 Легендарний"}
                       </span>
                     </div>
+
+                    {isUnclaimed && (
+                      <Button
+                        onClick={() => claimReward(reward.level, reward)}
+                        className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold animate-pulse-glow"
+                        size="lg"
+                      >
+                        <Gift className="w-5 h-5 mr-2" />
+                        Забрати!
+                      </Button>
+                    )}
                   </div>
                 </div>
               )

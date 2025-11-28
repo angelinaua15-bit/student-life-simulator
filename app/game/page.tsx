@@ -7,7 +7,7 @@ import { GameCard } from "@/components/game-card"
 import { Button } from "@/components/ui/button"
 import { EventBanner } from "@/components/event-banner"
 import { InnerVoiceCompanion } from "@/components/inner-voice-companion"
-import { RefreshCw } from "lucide-react"
+import { RefreshCw, UserPlus, Award } from "lucide-react"
 import { motion } from "framer-motion"
 import {
   Zap,
@@ -33,10 +33,11 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { useGameModal } from "@/lib/use-game-modal"
+import { checkAchievements } from "@/lib/achievements-tracker"
 
 export default function GameDashboard() {
   const router = useRouter()
-  const { showConfirm } = useGameModal()
+  const { showConfirm, showAlert } = useGameModal()
   const [gameState, setGameState] = useState<GameState | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -47,7 +48,24 @@ export default function GameDashboard() {
         router.push("/")
         return
       }
-      setGameState(saved)
+
+      const { newAchievements, updatedState } = checkAchievements(saved)
+      if (newAchievements.length > 0) {
+        // Show notification for new achievements
+        for (const achievement of newAchievements) {
+          setTimeout(() => {
+            showAlert(
+              `🎉 Досягнення розблоковано!\n\n${achievement.icon} ${achievement.title}\n${achievement.description}\n\n+${achievement.reward.xp} XP, +${achievement.reward.money} грн`,
+              "Нове Досягнення!",
+            )
+          }, 500)
+        }
+        setGameState(updatedState)
+        await saveGameState(updatedState)
+      } else {
+        setGameState(saved)
+      }
+
       setLoading(false)
 
       // Auto-save every 5 seconds
@@ -55,12 +73,24 @@ export default function GameDashboard() {
         const current = await loadGameState()
         if (current) {
           // Passive energy recovery
-          const updatedState = updateStats(current, {
+          let updated = updateStats(current, {
             energy: Math.min(100, current.stats.energy + 0.5),
             stress: Math.max(0, current.stats.stress - 0.3),
           })
-          setGameState(updatedState)
-          await saveGameState(updatedState)
+
+          const { newAchievements: newAch, updatedState: achState } = checkAchievements(updated)
+          if (newAch.length > 0) {
+            updated = achState
+            for (const achievement of newAch) {
+              showAlert(
+                `🎉 Досягнення розблоковано!\n\n${achievement.icon} ${achievement.title}\n${achievement.description}\n\n+${achievement.reward.xp} XP, +${achievement.reward.money} грн`,
+                "Нове Досягнення!",
+              )
+            }
+          }
+
+          setGameState(updated)
+          await saveGameState(updated)
         }
       }, 5000)
 
@@ -68,7 +98,7 @@ export default function GameDashboard() {
     }
 
     loadAndAutoSave()
-  }, [router])
+  }, [router, showAlert])
 
   if (loading || !gameState) {
     return (
@@ -170,6 +200,53 @@ export default function GameDashboard() {
                   Меню
                 </Button>
               </motion.div>
+
+              {/* Added Stats button to navigation */}
+              <Link href="/game/stats" className="block">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="rounded-full px-6 py-6 bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl border-white/30 hover:bg-white/70 hover:scale-110 transition-all shadow-xl font-bold"
+                >
+                  Статистика
+                </Button>
+              </Link>
+
+              <Link href="/game/achievements" className="block">
+                <Button
+                  variant="outline"
+                  className="w-full justify-start gap-3 h-auto py-4 hover:scale-105 transition-transform bg-gradient-to-r from-amber-500/10 to-yellow-500/10 hover:from-amber-500/20 hover:to-yellow-500/20"
+                >
+                  <Award className="w-5 h-5 text-amber-500" />
+                  <div className="text-left">
+                    <div className="font-bold">Досягнення</div>
+                    <div className="text-xs text-muted-foreground">Твої трофеї та успіхи</div>
+                  </div>
+                  {gameState.achievements && gameState.achievements.length > 0 && (
+                    <div className="ml-auto px-2 py-1 bg-amber-500/20 rounded-full text-amber-600 text-xs font-bold">
+                      {gameState.achievements.length}
+                    </div>
+                  )}
+                </Button>
+              </Link>
+
+              <Link href="/game/rewards" className="block">
+                <Button
+                  variant="outline"
+                  className="w-full justify-start gap-3 h-auto py-4 hover:scale-105 transition-transform bg-gradient-to-r from-purple-500/10 to-pink-500/10 hover:from-purple-500/20 hover:to-pink-500/20"
+                >
+                  <Gift className="w-5 h-5 text-purple-500" />
+                  <div className="text-left">
+                    <div className="font-bold">Мої Нагороди</div>
+                    <div className="text-xs text-muted-foreground">Твої винагороди</div>
+                  </div>
+                  {gameState.unclaimedRewards && gameState.unclaimedRewards.length > 0 && (
+                    <div className="ml-auto w-6 h-6 bg-red-500 rounded-full flex items-center justify-center text-white text-xs font-bold animate-pulse">
+                      {gameState.unclaimedRewards.length}
+                    </div>
+                  )}
+                </Button>
+              </Link>
             </div>
           </div>
 
@@ -196,7 +273,7 @@ export default function GameDashboard() {
                   <div className="absolute inset-0 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 blur-sm opacity-60" />
                 </motion.div>
               </div>
-              <div className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-pink-500/20 blur-md -z-10" />
+              <div className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-pink-500/20 blur-md -z-10 opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
           </motion.div>
         </div>
@@ -360,6 +437,7 @@ export default function GameDashboard() {
           </div>
 
           <div className="lg:col-span-2 space-y-8">
+            {/* Profile Section */}
             <motion.div initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
               <h2 className="text-3xl font-extrabold mb-6 flex items-center gap-3 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center shadow-xl">
@@ -406,6 +484,57 @@ export default function GameDashboard() {
                 </div>
               </Link>
             </motion.div>
+
+            {/* Friends Section */}
+            <div>
+              <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+                <Users className="w-6 h-6 text-pink-500" />
+                Друзі та соціальне
+              </h2>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <Link href="/game/friends">
+                  <GameCard
+                    title="Знайти друзів"
+                    description="Шукай інших гравців та додавай у друзі"
+                    className="cursor-pointer hover:scale-105 transition-transform"
+                    glowing
+                  >
+                    <div className="flex items-center justify-center py-2">
+                      <div className="relative">
+                        <Users className="w-12 h-12 text-pink-500 animate-pulse" />
+                        <Sparkles className="w-6 h-6 text-yellow-500 absolute -top-1 -right-1 animate-pulse" />
+                      </div>
+                    </div>
+                  </GameCard>
+                </Link>
+
+                <Link href="/game/friends/requests">
+                  <GameCard
+                    title="Запити в друзі"
+                    description="Переглядай та керуй запитами"
+                    className="cursor-pointer hover:scale-105 transition-transform"
+                    glowing
+                  >
+                    <div className="flex items-center justify-center py-2">
+                      <UserPlus className="w-12 h-12 text-green-500 animate-pulse" />
+                    </div>
+                  </GameCard>
+                </Link>
+
+                <Link href="/game/friends/list">
+                  <GameCard
+                    title="Мої друзі"
+                    description="Список твоїх друзів"
+                    className="cursor-pointer hover:scale-105 transition-transform"
+                    glowing
+                  >
+                    <div className="flex items-center justify-center py-2">
+                      <Heart className="w-12 h-12 text-red-500 animate-pulse" />
+                    </div>
+                  </GameCard>
+                </Link>
+              </div>
+            </div>
 
             {/* Mini-games Section */}
             <div>
