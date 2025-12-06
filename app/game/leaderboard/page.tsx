@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { GameCard } from "@/components/game-card"
 import { ArrowLeft, Crown, Trophy, Medal, Sparkles } from "lucide-react"
 import Link from "next/link"
-import { getLeaderboard, type LeaderboardPlayer } from "@/lib/database"
+import { getLeaderboardAction, type LeaderboardPlayer } from "@/lib/database-actions"
 import { loadGameState } from "@/lib/game-state"
 
 export default function LeaderboardPage() {
@@ -20,15 +20,11 @@ export default function LeaderboardPage() {
 
   async function loadLeaderboard() {
     setLoading(true)
-    console.log("[v0] Loading leaderboard from database...")
-    const data = await getLeaderboard(50)
-
-    console.log("[v0] Leaderboard data received:", data.length)
+    const data = await getLeaderboardAction(50)
 
     if (data.length === 0) {
       const gameState = await loadGameState()
       if (gameState?.playerId) {
-        console.log("[v0] Adding current player to empty leaderboard")
         setPlayers([
           {
             id: gameState.playerId,

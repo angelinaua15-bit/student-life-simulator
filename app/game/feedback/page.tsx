@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent } from "@/components/ui/card"
 import { loadGameState } from "@/lib/game-state"
+import { getFeedbackListAction, submitFeedbackAction } from "@/lib/database-actions"
 import { ArrowLeft, Star, Send, Heart, Sparkles, MessageCircle, TrendingUp } from "lucide-react"
 import { useGameModal } from "@/lib/use-game-modal"
 
@@ -44,8 +45,16 @@ export default function FeedbackPage() {
   }
 
   const loadFeedbacks = async () => {
-    setLoading(false)
-    setFeedbacks([])
+    setLoading(true)
+    try {
+      const data = await getFeedbackListAction(50)
+      setFeedbacks(data as Feedback[])
+    } catch (err) {
+      console.error("Failed to load feedback:", err)
+      setFeedbacks([])
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleSubmit = async () => {
@@ -59,7 +68,36 @@ export default function FeedbackPage() {
       return
     }
 
-    showAlert("Функція відгуків тимчасово недоступна. Дякуємо за розуміння!")
+    setSubmitting(true)
+
+    try {
+      const state = await loadGameState()
+      if (!state) {
+        showAlert("Не вдалось завантажити дані гравця")
+        return
+      }
+
+      const result = await submitFeedbackAction({
+        player_id: state.playerId,
+        player_name: state.playerName,
+        player_avatar: state.skin || "default",
+        rating,
+        message: message.trim(),
+      })
+
+      if (result.success) {
+        showSuccess("Дякуємо за відгук! 🎉")
+        setRating(0)
+        setMessage("")
+        await loadFeedbacks()
+      } else {
+        showAlert(result.error || "Не вдалось надіслати відгук")
+      }
+    } catch (err) {
+      showAlert("Помилка відправки відгуку")
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   const formatDate = (dateString: string) => {

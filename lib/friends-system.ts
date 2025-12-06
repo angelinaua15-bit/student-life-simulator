@@ -1,9 +1,6 @@
 import { loadGameState } from "@/lib/game-state"
-import {
-  searchPlayers as dbSearchPlayers,
-  sendFriendRequest as dbSendFriendRequest,
-  getFriendsList as dbGetFriendsList,
-} from "@/lib/database"
+import { searchPlayersAction } from "@/lib/database-actions"
+import { sendFriendRequest as dbSendFriendRequest, getFriendsList as dbGetFriendsList } from "@/lib/database"
 
 export interface PlayerProfile {
   id: string
@@ -80,7 +77,7 @@ function generateMockPlayers(count: number): PlayerProfile[] {
 // Search for players - now uses database
 export async function searchPlayers(query: string): Promise<PlayerProfile[]> {
   try {
-    const results = await dbSearchPlayers(query)
+    const results = await searchPlayersAction(query)
 
     if (results.length > 0) {
       return results
@@ -106,7 +103,7 @@ export async function searchPlayers(query: string): Promise<PlayerProfile[]> {
 // Get recommended players
 export async function getRecommendedPlayers(): Promise<PlayerProfile[]> {
   try {
-    const results = await dbSearchPlayers("")
+    const results = await searchPlayersAction("")
     if (results.length > 0) {
       return results.slice(0, 6)
     }
@@ -120,7 +117,7 @@ export async function getRecommendedPlayers(): Promise<PlayerProfile[]> {
 // Get active players
 export async function getActivePlayers(): Promise<PlayerProfile[]> {
   try {
-    const results = await dbSearchPlayers("")
+    const results = await searchPlayersAction("")
     if (results.length > 0) {
       return results.slice(0, 8)
     }
@@ -187,6 +184,6 @@ export async function areFriends(playerId: string): Promise<boolean> {
 
 export async function searchPlayerByPlayerId(playerId: string): Promise<PlayerProfile | null> {
   console.log("[v0] Searching player by ID:", playerId)
-  const results = await dbSearchPlayers(playerId)
+  const results = await searchPlayersAction(playerId)
   return results.length > 0 ? results[0] : null
 }
