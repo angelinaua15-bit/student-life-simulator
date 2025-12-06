@@ -10,13 +10,7 @@ import Link from "next/link"
 import { motion } from "framer-motion"
 import { loadGameState } from "@/lib/game-state"
 import { getAchievementProgress } from "@/lib/achievements-tracker"
-import {
-  ACHIEVEMENTS,
-  type Achievement,
-  getCategoryColor,
-  getRarityColor,
-  getCategoryName,
-} from "@/lib/achievements-data"
+import { ACHIEVEMENTS, type Achievement, getRarityColor, getCategoryName } from "@/lib/achievements-data"
 
 export default function AchievementsPage() {
   const [progress, setProgress] = useState<ReturnType<typeof getAchievementProgress> | null>(null)
@@ -55,11 +49,11 @@ export default function AchievementsPage() {
     selectedCategory === "all" ? progress.locked : progress.locked.filter((a) => a.category === selectedCategory)
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 p-4 sm:p-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20 dark:from-slate-950 dark:via-blue-950/20 dark:to-purple-950/10 p-4 sm:p-8">
       {/* Decorative Elements */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-20 left-10 w-64 h-64 bg-primary/5 rounded-full blur-3xl animate-float" />
-        <div className="absolute bottom-20 right-10 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-float-delayed" />
+        <div className="absolute top-20 left-10 w-64 h-64 bg-gradient-to-br from-blue-200/10 to-cyan-200/10 rounded-full blur-3xl animate-soft-float" />
+        <div className="absolute bottom-20 right-10 w-96 h-96 bg-gradient-to-br from-purple-200/10 to-pink-200/10 rounded-full blur-3xl animate-soft-float delay-300" />
       </div>
 
       <div className="max-w-6xl mx-auto relative z-10">
@@ -74,17 +68,17 @@ export default function AchievementsPage() {
 
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-8">
             <div className="flex items-center justify-center gap-3 mb-4">
-              <Trophy className="w-12 h-12 text-primary animate-pulse" />
-              <h1 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-primary via-primary/80 to-primary bg-clip-text text-transparent">
+              <Trophy className="w-12 h-12 text-primary animate-gentle-pulse" />
+              <h1 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                 Досягнення
               </h1>
-              <Sparkles className="w-12 h-12 text-primary animate-pulse" />
+              <Sparkles className="w-12 h-12 text-primary animate-gentle-pulse" />
             </div>
             <p className="text-muted-foreground text-lg">Відстежуй свій прогрес та отримуй нагороди</p>
           </motion.div>
 
           {/* Progress Overview */}
-          <Card className="p-6 bg-gradient-to-br from-primary/10 via-background to-background backdrop-blur-sm border-2 border-primary/20">
+          <Card className="p-6 bg-card/80 backdrop-blur-sm border border-border rounded-2xl shadow-lg">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4">
               <div className="text-center sm:text-left">
                 <p className="text-3xl font-bold text-primary">
@@ -103,7 +97,7 @@ export default function AchievementsPage() {
 
         {/* Category Filter */}
         <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="mb-6">
-          <TabsList className="w-full flex flex-wrap justify-start gap-2 h-auto p-2 bg-card/50 backdrop-blur-sm">
+          <TabsList className="w-full flex flex-wrap justify-start gap-2 h-auto p-2 bg-card/80 backdrop-blur-sm rounded-2xl border border-border">
             <TabsTrigger value="all" className="flex items-center gap-2">
               <Star className="w-4 h-4" />
               Всі
@@ -132,7 +126,7 @@ export default function AchievementsPage() {
                   transition={{ delay: i * 0.05 }}
                 >
                   <Card
-                    className={`p-6 bg-gradient-to-br ${getCategoryColor(achievement.category)} backdrop-blur-sm border-2 border-primary/30 hover:scale-105 transition-all duration-300 hover:shadow-xl hover:shadow-primary/20`}
+                    className={`p-6 bg-card/80 backdrop-blur-sm border-2 border-primary/20 rounded-2xl hover:scale-105 transition-all duration-300 hover:shadow-xl hover:shadow-primary/10`}
                   >
                     <div className="flex items-start gap-4">
                       <div className="text-5xl">{achievement.icon}</div>
@@ -172,7 +166,7 @@ export default function AchievementsPage() {
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: i * 0.05 }}
                 >
-                  <Card className="p-6 bg-card/30 backdrop-blur-sm border-2 border-muted/20 opacity-60 hover:opacity-80 transition-opacity">
+                  <Card className="p-6 bg-card/50 backdrop-blur-sm border border-muted/20 rounded-2xl opacity-60 hover:opacity-80 transition-opacity">
                     <div className="flex items-start gap-4">
                       <div className="text-5xl grayscale">{achievement.icon}</div>
                       <div className="flex-1">

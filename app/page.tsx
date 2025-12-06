@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { loadGameState, type GameState } from "@/lib/game-state"
-import { createClient } from "@/lib/supabase/client"
 import {
   Play,
   Plus,
@@ -30,14 +29,12 @@ import { useGameModal } from "@/lib/use-game-modal"
 
 export default function HomePage() {
   const router = useRouter()
-  const { showConfirm, showSuccess, showAlert } = useGameModal()
+  const { showConfirm, showSuccess } = useGameModal()
   const [gameState, setGameState] = useState<GameState | null>(null)
   const [loading, setLoading] = useState(true)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [showNewGame, setShowNewGame] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const [showAbout, setShowAbout] = useState(false)
-  const [newPlayerName, setNewPlayerName] = useState("")
   const [mentorVisible, setMentorVisible] = useState(false)
 
   // Settings state
@@ -50,32 +47,14 @@ export default function HomePage() {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const supabase = createClient()
-
-      if (!supabase) {
-        setIsAuthenticated(false)
-        // Check localStorage for saved game
-        const saved = await loadGameState()
-        setGameState(saved)
-        setLoading(false)
-        return
-      }
-
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-
-      if (user) {
+      const currentUser = localStorage.getItem("evo_student_current_user")
+      if (currentUser) {
         setIsAuthenticated(true)
         const saved = await loadGameState()
         setGameState(saved)
       } else {
         setIsAuthenticated(false)
-        // Check localStorage fallback
-        const saved = await loadGameState()
-        setGameState(saved)
       }
-
       setLoading(false)
     }
 
@@ -85,12 +64,6 @@ export default function HomePage() {
     return () => clearTimeout(timer)
   }, [])
 
-  const handleNewGame = async () => {
-    if (newPlayerName.trim()) {
-      router.push("/onboarding")
-    }
-  }
-
   const handleContinue = () => {
     router.push("/game")
   }
@@ -99,10 +72,7 @@ export default function HomePage() {
     showConfirm(
       "Ти впевнений, що хочеш вийти з акаунту?",
       async () => {
-        const supabase = createClient()
-        if (supabase) {
-          await supabase.auth.signOut()
-        }
+        localStorage.removeItem("evo_student_current_user")
         setIsAuthenticated(false)
         setGameState(null)
         showSuccess("Ти вийшов з акаунту. До зустрічі!")
@@ -113,43 +83,44 @@ export default function HomePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-600 via-cyan-500 to-yellow-400 animate-gradient">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100">
         <div className="text-center space-y-4">
-          <div className="animate-spin rounded-full h-20 w-20 border-t-4 border-b-4 border-white mx-auto"></div>
-          <p className="text-white text-2xl font-bold animate-pulse">Loading EVO STUDENT...</p>
+          <div className="animate-spin rounded-full h-20 w-20 border-4 border-indigo-200 border-t-indigo-600 mx-auto"></div>
+          <p className="text-gray-700 text-2xl font-bold animate-pulse">Завантаження EVO STUDENT...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-purple-600 via-cyan-500 to-yellow-400 animate-gradient">
-      {/* Animated background elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-10 left-10 w-32 h-32 bg-white/10 rounded-full blur-3xl animate-float"></div>
-        <div className="absolute top-40 right-20 w-48 h-48 bg-yellow-400/20 rounded-full blur-3xl animate-float animation-delay-1000"></div>
-        <div className="absolute bottom-20 left-1/4 w-40 h-40 bg-cyan-400/20 rounded-full blur-3xl animate-float animation-delay-2000"></div>
-        <div className="absolute bottom-40 right-1/3 w-56 h-56 bg-purple-400/20 rounded-full blur-3xl animate-float animation-delay-1500"></div>
+    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20 dark:from-slate-950 dark:via-blue-950/20 dark:to-purple-950/10">
+      {/* Soft 3D floating background elements */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-20 left-20 w-96 h-96 bg-gradient-to-br from-blue-200/20 to-cyan-200/20 rounded-full blur-3xl animate-soft-float" />
+        <div className="absolute bottom-40 right-40 w-[500px] h-[500px] bg-gradient-to-br from-purple-200/20 to-pink-200/20 rounded-full blur-3xl animate-soft-float delay-300" />
+        <div className="absolute top-1/2 left-1/3 w-80 h-80 bg-gradient-to-br from-amber-200/10 to-orange-200/10 rounded-full blur-3xl animate-soft-float delay-500" />
       </div>
 
       {/* Main Menu Container */}
       <div className="min-h-screen flex items-center justify-center p-4 relative z-10">
-        <div className="w-full max-w-2xl space-y-8 animate-scale-in">
-          {/* Logo */}
+        <div className="w-full max-w-2xl space-y-8 animate-smooth-scale-in">
           <div className="text-center space-y-4">
-            <h1 className="text-7xl md:text-8xl font-black text-white animate-float drop-shadow-2xl">EVO STUDENT</h1>
-            <p className="text-white/90 text-xl font-medium drop-shadow-lg">Твоя студентська пригода починається тут</p>
+            <h1 className="text-7xl md:text-8xl font-black bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              EVO STUDENT
+            </h1>
+            <p className="text-slate-600 dark:text-slate-300 text-xl font-medium">
+              Твоя студентська пригода починається тут
+            </p>
           </div>
 
-          {/* Menu Card */}
-          <Card className="backdrop-blur-xl bg-white/90 shadow-2xl border-0 overflow-hidden">
+          <Card className="backdrop-blur-2xl bg-white/80 dark:bg-slate-900/80 shadow-2xl border border-slate-200/50 dark:border-slate-700/50 rounded-3xl overflow-hidden">
             <CardContent className="p-8 space-y-4">
               {isAuthenticated ? (
                 <>
                   {gameState && (
                     <Button
                       onClick={handleContinue}
-                      className="w-full h-16 text-xl font-bold bg-gradient-to-r from-purple-600 to-cyan-500 hover:from-purple-700 hover:to-cyan-600 text-white shadow-lg hover:shadow-xl transition-all hover:scale-105"
+                      className="w-full h-16 text-xl font-bold bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white shadow-lg hover:shadow-xl transition-all hover:scale-[1.02] rounded-2xl"
                     >
                       <Play className="mr-2 h-6 w-6" />
                       Продовжити гру
@@ -159,9 +130,9 @@ export default function HomePage() {
                   <Button
                     onClick={() => router.push("/onboarding")}
                     variant={gameState ? "outline" : "default"}
-                    className={`w-full h-14 text-lg font-bold transition-all hover:scale-105 ${
+                    className={`w-full h-14 text-lg font-bold transition-all hover:scale-[1.02] rounded-2xl ${
                       !gameState
-                        ? "bg-gradient-to-r from-purple-600 to-cyan-500 hover:from-purple-700 hover:to-cyan-600 text-white shadow-lg"
+                        ? "bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white shadow-lg"
                         : ""
                     }`}
                   >
@@ -173,7 +144,7 @@ export default function HomePage() {
                     <Button
                       onClick={() => router.push("/game/leaderboard")}
                       variant="outline"
-                      className="h-14 font-semibold border-2 hover:bg-yellow-100 dark:hover:bg-yellow-900/30 hover:scale-105 transition-all"
+                      className="h-14 font-semibold border-2 hover:bg-yellow-100 dark:hover:bg-yellow-900/30 hover:scale-[1.02] transition-all rounded-2xl"
                     >
                       <Trophy className="mr-2 h-5 w-5 text-yellow-600" />
                       Лідери
@@ -182,7 +153,7 @@ export default function HomePage() {
                     <Button
                       onClick={() => router.push("/game/rewards")}
                       variant="outline"
-                      className="h-14 font-semibold border-2 hover:bg-purple-100 dark:hover:bg-purple-900/30 hover:scale-105 transition-all relative"
+                      className="h-14 font-semibold border-2 hover:bg-purple-100 dark:hover:bg-purple-900/30 hover:scale-[1.02] transition-all relative rounded-2xl"
                     >
                       <Gift className="mr-2 h-5 w-5 text-purple-600" />
                       Нагороди
@@ -197,7 +168,7 @@ export default function HomePage() {
                   <Button
                     onClick={() => setShowSettings(true)}
                     variant="outline"
-                    className="w-full h-14 text-lg font-semibold border-2 hover:bg-secondary/10 hover:scale-105 transition-all"
+                    className="w-full h-14 text-lg font-semibold border-2 hover:bg-secondary/10 hover:scale-[1.02] transition-all rounded-2xl"
                   >
                     <SettingsIcon className="mr-2 h-5 w-5" />
                     Налаштування
@@ -206,7 +177,7 @@ export default function HomePage() {
                   <Button
                     onClick={() => setShowAbout(true)}
                     variant="outline"
-                    className="w-full h-14 text-lg font-semibold border-2 hover:bg-accent/10 hover:scale-105 transition-all"
+                    className="w-full h-14 text-lg font-semibold border-2 hover:bg-accent/10 hover:scale-[1.02] transition-all rounded-2xl"
                   >
                     <Info className="mr-2 h-5 w-5" />
                     Про гру
@@ -215,7 +186,7 @@ export default function HomePage() {
                   <Button
                     onClick={() => router.push("/game/feedback")}
                     variant="outline"
-                    className="w-full h-14 text-lg font-semibold border-2 hover:bg-purple-100 dark:hover:bg-purple-900/30 hover:scale-105 transition-all"
+                    className="w-full h-14 text-lg font-semibold border-2 hover:bg-purple-100 dark:hover:bg-purple-900/30 hover:scale-[1.02] transition-all rounded-2xl"
                   >
                     <MessageCircle className="mr-2 h-5 w-5" />
                     Відгуки
@@ -224,7 +195,7 @@ export default function HomePage() {
                   <Button
                     onClick={handleLogout}
                     variant="ghost"
-                    className="w-full h-12 text-base font-medium text-muted-foreground hover:text-destructive hover:scale-105 transition-all"
+                    className="w-full h-12 text-base font-medium text-muted-foreground hover:text-destructive hover:scale-[1.02] transition-all rounded-2xl"
                   >
                     <LogOut className="mr-2 h-4 w-4" />
                     Вийти з акаунту
@@ -234,7 +205,7 @@ export default function HomePage() {
                 <>
                   <Button
                     onClick={() => router.push("/auth/login")}
-                    className="w-full h-16 text-xl font-bold bg-gradient-to-r from-purple-600 to-cyan-500 hover:from-purple-700 hover:to-cyan-600 text-white shadow-lg hover:shadow-xl transition-all hover:scale-105"
+                    className="w-full h-16 text-xl font-bold bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white shadow-lg hover:shadow-xl transition-all hover:scale-[1.02] rounded-2xl"
                   >
                     <LogIn className="mr-2 h-6 w-6" />
                     Увійти
@@ -243,7 +214,7 @@ export default function HomePage() {
                   <Button
                     onClick={() => router.push("/auth/signup")}
                     variant="outline"
-                    className="w-full h-14 text-lg font-bold border-2 hover:bg-primary/10 hover:scale-105 transition-all"
+                    className="w-full h-14 text-lg font-bold border-2 hover:bg-primary/10 hover:scale-[1.02] transition-all rounded-2xl"
                   >
                     <Plus className="mr-2 h-5 w-5" />
                     Створити акаунт
@@ -252,7 +223,7 @@ export default function HomePage() {
                   <Button
                     onClick={() => setShowAbout(true)}
                     variant="outline"
-                    className="w-full h-14 text-lg font-semibold border-2 hover:bg-accent/10 hover:scale-105 transition-all"
+                    className="w-full h-14 text-lg font-semibold border-2 hover:bg-accent/10 hover:scale-[1.02] transition-all rounded-2xl"
                   >
                     <Info className="mr-2 h-5 w-5" />
                     Про гру
@@ -263,18 +234,20 @@ export default function HomePage() {
           </Card>
 
           {gameState && isAuthenticated && (
-            <div className="flex justify-center gap-6 text-white text-center animate-fade-in">
-              <div className="backdrop-blur-md bg-white/20 rounded-xl px-6 py-3">
-                <div className="text-2xl font-bold">{gameState.stats.level}</div>
-                <div className="text-sm opacity-90">Рівень</div>
+            <div className="flex justify-center gap-6 text-center animate-fade-in">
+              <div className="backdrop-blur-md bg-white/60 dark:bg-slate-900/60 rounded-xl px-6 py-3 shadow-lg">
+                <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{gameState.stats.level}</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">Рівень</div>
               </div>
-              <div className="backdrop-blur-md bg-white/20 rounded-xl px-6 py-3">
-                <div className="text-2xl font-bold">{gameState.stats.money}₴</div>
-                <div className="text-sm opacity-90">Гроші</div>
+              <div className="backdrop-blur-md bg-white/60 dark:bg-slate-900/60 rounded-xl px-6 py-3 shadow-lg">
+                <div className="text-2xl font-bold text-green-600 dark:text-green-400">{gameState.stats.money}₴</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">Гроші</div>
               </div>
-              <div className="backdrop-blur-md bg-white/20 rounded-xl px-6 py-3">
-                <div className="text-2xl font-bold">{gameState.stats.energy}%</div>
-                <div className="text-sm opacity-90">Енергія</div>
+              <div className="backdrop-blur-md bg-white/60 dark:bg-slate-900/60 rounded-xl px-6 py-3 shadow-lg">
+                <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
+                  {Math.round(gameState.stats.energy)}%
+                </div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">Енергія</div>
               </div>
             </div>
           )}
@@ -286,22 +259,22 @@ export default function HomePage() {
         <div className="fixed bottom-8 right-8 animate-slide-in-right z-50">
           <div className="relative">
             {/* Speech bubble */}
-            <div className="absolute bottom-full right-0 mb-4 mr-4 bg-white rounded-2xl px-6 py-4 shadow-2xl max-w-xs animate-bounce-in">
-              <p className="text-sm font-medium text-gray-800">
+            <div className="absolute bottom-full right-0 mb-4 mr-4 bg-white dark:bg-slate-900 rounded-2xl px-6 py-4 shadow-2xl max-w-xs animate-bounce-in border border-slate-200 dark:border-slate-700">
+              <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
                 {isAuthenticated
                   ? gameState
                     ? "Привіт знову! Готовий продовжити свій шлях?"
                     : "Створи свою гру і почнемо пригоду!"
                   : "Увійди або зареєструйся, щоб почати грати!"}
               </p>
-              <div className="absolute bottom-0 right-8 translate-y-1/2 w-4 h-4 bg-white rotate-45"></div>
+              <div className="absolute bottom-0 right-8 translate-y-1/2 w-4 h-4 bg-white dark:bg-slate-900 rotate-45 border-r border-b border-slate-200 dark:border-slate-700"></div>
             </div>
 
             {/* Mentor avatar with glow */}
             <div className="relative">
               <div className="absolute inset-0 bg-gradient-to-br from-purple-400 to-cyan-400 rounded-full blur-xl opacity-75 animate-pulse"></div>
               <div className="relative bg-gradient-to-br from-purple-500 to-cyan-500 rounded-full p-1 shadow-2xl">
-                <div className="bg-white rounded-full p-4 w-24 h-24 flex items-center justify-center">
+                <div className="bg-white dark:bg-slate-900 rounded-full p-4 w-24 h-24 flex items-center justify-center">
                   <Sparkles className="w-12 h-12 text-purple-600" />
                 </div>
               </div>
@@ -309,27 +282,6 @@ export default function HomePage() {
           </div>
         </div>
       )}
-
-      <Dialog open={showNewGame} onOpenChange={setShowNewGame}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-2xl">Нова гра</DialogTitle>
-            <DialogDescription>Почни свою студентську пригоду з персоналізацією!</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="text-center py-6">
-              <Sparkles className="w-16 h-16 mx-auto mb-4 text-primary animate-pulse" />
-              <p className="text-muted-foreground">
-                Тебе чекає захоплююча подорож! Спочатку ти пройдеш тест особистості, який визначить твій унікальний
-                стиль студента.
-              </p>
-            </div>
-            <Button onClick={() => router.push("/onboarding")} className="w-full h-12 text-lg font-bold">
-              Розпочати пригоду
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
 
       {/* Settings Dialog */}
       <Dialog open={showSettings} onOpenChange={setShowSettings}>
@@ -386,7 +338,7 @@ export default function HomePage() {
                 <select
                   value={language}
                   onChange={(e) => setLanguage(e.target.value)}
-                  className="w-full p-2 border rounded-lg"
+                  className="w-full p-2 border rounded-lg bg-white dark:bg-slate-900"
                 >
                   <option value="ua">Українська</option>
                   <option value="en">English</option>
@@ -404,7 +356,7 @@ export default function HomePage() {
                 <select
                   value={graphics}
                   onChange={(e) => setGraphics(e.target.value)}
-                  className="w-full p-2 border rounded-lg"
+                  className="w-full p-2 border rounded-lg bg-white dark:bg-slate-900"
                 >
                   <option value="low">Низька</option>
                   <option value="medium">Середня</option>
@@ -449,7 +401,7 @@ export default function HomePage() {
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Платформа:</span>
-                <span className="font-medium">Web (Next.js + Supabase)</span>
+                <span className="font-medium">Web (Next.js + LocalStorage)</span>
               </div>
             </div>
             <Button className="w-full" onClick={() => setShowAbout(false)}>

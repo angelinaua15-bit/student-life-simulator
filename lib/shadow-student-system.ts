@@ -140,15 +140,20 @@ const SHADOW_PERSONALITIES = {
 export class ShadowStudentAI {
   private shadowProfile: ShadowProfile | null = null
   private encounters: ShadowEncounter[] = []
+  private STORAGE_KEY = "shadow-student-profile"
 
   initializeShadow(playerState: any): ShadowProfile {
-    // Створення протилежної особистості
+    const stored = this.loadFromStorage()
+    if (stored) {
+      this.shadowProfile = stored
+      return stored
+    }
+
     const personalities: Array<ShadowProfile["personality"]> = ["rebel", "perfectionist", "chaos", "genius"]
     const playerPersonality = playerState.personalityType || "default"
 
     let shadowPersonality: ShadowProfile["personality"] = "rebel"
 
-    // Вибір протилежної особистості
     if (playerPersonality === "ambitious") {
       shadowPersonality = "chaos"
     } else if (playerPersonality === "creative") {
@@ -161,7 +166,7 @@ export class ShadowStudentAI {
 
     this.shadowProfile = {
       name: `${playerState.playerName} [ТІНЬ]`,
-      level: Math.max(1, playerState.stats.level - 2), // Трохи слабший
+      level: Math.max(1, playerState.stats.level - 2),
       stats: {
         energy: 100 - playerState.stats.energy,
         happiness: 100 - playerState.stats.happiness,
@@ -176,10 +181,14 @@ export class ShadowStudentAI {
       challengesLost: 0,
     }
 
+    this.saveToStorage()
     return this.shadowProfile
   }
 
   getShadowProfile(): ShadowProfile | null {
+    if (!this.shadowProfile) {
+      this.shadowProfile = this.loadFromStorage()
+    }
     return this.shadowProfile
   }
 
@@ -191,18 +200,16 @@ export class ShadowStudentAI {
     const timeSinceLastEncounter = Date.now() - (this.shadowProfile?.lastEncounter || 0)
     const hoursSinceLastEncounter = timeSinceLastEncounter / (1000 * 60 * 60)
 
-    // З'являється кожні 2-4 години гри або при особливих умовах
     if (hoursSinceLastEncounter > 2) {
-      return Math.random() < 0.3 // 30% шанс
+      return Math.random() < 0.3
     }
 
-    // Особливі умови
     if (playerState.stats.level % 5 === 0 && playerState.stats.experience < 50) {
-      return true // З'являється на круглих рівнях
+      return true
     }
 
     if (playerState.stats.stress > 80 || playerState.stats.happiness < 20) {
-      return Math.random() < 0.5 // 50% шанс при поганому стані
+      return Math.random() < 0.5
     }
 
     return false
@@ -256,7 +263,7 @@ export class ShadowStudentAI {
       description: "",
       reward: 100 + playerState.stats.level * 20,
       penalty: 50 + playerState.stats.level * 10,
-      deadline: Date.now() + 24 * 60 * 60 * 1000, // 24 години
+      deadline: Date.now() + 24 * 60 * 60 * 1000,
       target: 0,
       progress: 0,
     }
@@ -303,15 +310,41 @@ export class ShadowStudentAI {
 
     if (won) {
       this.shadowProfile.challengesLost++
-      return personality.messages.victory[Math.floor(Math.random() * personality.messages.victory.length)]
     } else {
       this.shadowProfile.challengesWon++
+    }
+
+    this.saveToStorage()
+
+    if (won) {
+      return personality.messages.victory[Math.floor(Math.random() * personality.messages.victory.length)]
+    } else {
       return personality.messages.defeat[Math.floor(Math.random() * personality.messages.defeat.length)]
     }
   }
 
   getRecentEncounters(count = 5): ShadowEncounter[] {
     return this.encounters.slice(-count)
+  }
+
+  private saveToStorage(): void {
+    if (typeof window !== "undefined" && this.shadowProfile) {
+      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.shadowProfile))
+    }
+  }
+
+  private loadFromStorage(): ShadowProfile | null {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem(this.STORAGE_KEY)
+      if (stored) {
+        try {
+          return JSON.parse(stored)
+        } catch (e) {
+          console.error("[v0] Error loading shadow profile:", e)
+        }
+      }
+    }
+    return null
   }
 }
 

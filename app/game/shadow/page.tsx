@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { loadGameState, type GameState } from "@/lib/game-state"
+import { loadGameState, saveGameState, type GameState } from "@/lib/game-state"
 import { shadowStudentAI, type ShadowProfile, type ShadowChallenge } from "@/lib/shadow-student-system"
 import { Button } from "@/components/ui/button"
 import { GameCard } from "@/components/game-card"
@@ -22,23 +22,27 @@ export default function ShadowStudentPage() {
 
   useEffect(() => {
     const load = async () => {
-      const state = await loadGameState()
-      if (!state) {
-        router.push("/")
-        return
+      try {
+        const state = await loadGameState()
+        if (!state) {
+          router.push("/")
+          return
+        }
+
+        setGameState(state)
+
+        let shadow = shadowStudentAI.getShadowProfile()
+        if (!shadow) {
+          shadow = shadowStudentAI.initializeShadow(state)
+        }
+        setShadowProfile(shadow)
+        setCurrentChallenge(shadow.currentChallenge || null)
+
+        setLoading(false)
+      } catch (error) {
+        console.error("[v0] Error loading shadow page:", error)
+        router.push("/game")
       }
-
-      setGameState(state)
-
-      // Ініціалізація або отримання Shadow профілю
-      let shadow = shadowStudentAI.getShadowProfile()
-      if (!shadow) {
-        shadow = shadowStudentAI.initializeShadow(state)
-      }
-      setShadowProfile(shadow)
-      setCurrentChallenge(shadow.currentChallenge || null)
-
-      setLoading(false)
     }
 
     load()
@@ -58,6 +62,45 @@ export default function ShadowStudentPage() {
 
     const encounter = shadowStudentAI.generateEncounter("hint", gameState)
     showAlert(encounter.message, "Підказка від Тіні")
+  }
+
+  const handleCompleteChallenge = async (won: boolean) => {
+    if (!gameState || !currentChallenge || !shadowProfile) return
+
+    const message = shadowStudentAI.resolveChallenge(won)
+
+    if (won) {
+      const updatedState = {
+        ...gameState,
+        stats: {
+          ...gameState.stats,
+          money: gameState.stats.money + currentChallenge.reward,
+          happiness: Math.min(100, gameState.stats.happiness + 10),
+        },
+      }
+      await saveGameState(updatedState)
+      setGameState(updatedState)
+      showSuccess(`Ти переміг тінь!\n+${currentChallenge.reward} грн\n"${message}"`, "Перемога!")
+    } else {
+      const updatedState = {
+        ...gameState,
+        stats: {
+          ...gameState.stats,
+          money: Math.max(0, gameState.stats.money - currentChallenge.penalty),
+          stress: Math.min(100, gameState.stats.stress + 10),
+        },
+      }
+      await saveGameState(updatedState)
+      setGameState(updatedState)
+      showAlert(`Тінь перемогла...\n-${currentChallenge.penalty} грн\n"${message}"`, "Поразка")
+    }
+
+    setCurrentChallenge(null)
+    const updatedShadow = shadowStudentAI.getShadowProfile()
+    if (updatedShadow) {
+      updatedShadow.currentChallenge = undefined
+      setShadowProfile(updatedShadow)
+    }
   }
 
   if (loading || !gameState || !shadowProfile) {
@@ -210,6 +253,19 @@ export default function ShadowStudentPage() {
                 <div className="pt-4 border-t border-gray-700">
                   <p className="text-sm text-gray-400 italic text-center">"Побачимо, чи зможеш ти перемогти себе..."</p>
                 </div>
+              </div>
+
+              <div className="flex gap-3 mt-6">
+                <Button
+                  onClick={() => handleCompleteChallenge(true)}
+                  className="flex-1 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600"
+                  size="lg"
+                >
+                  <Trophy className="w-5 h-5 mr-2" />Я виконав виклик!
+                </Button>
+                <Button onClick={() => handleCompleteChallenge(false)} variant="outline" className="flex-1" size="lg">
+                  Здатися
+                </Button>
               </div>
             </GameCard>
           </motion.div>

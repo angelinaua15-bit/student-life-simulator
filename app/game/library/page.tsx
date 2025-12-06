@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { loadGameState, saveGameState, updateStats, addMoney, addExperience } from "@/lib/game-state"
 import { Button } from "@/components/ui/button"
 import { GameCard } from "@/components/game-card"
-import { ArrowLeft, ArrowUp, ArrowDown, ArrowRight, ArrowLeftIcon, Loader2 } from "lucide-react"
+import { ArrowLeft, ArrowUp, ArrowDown, ArrowRight, ArrowLeftIcon, Loader2, X } from "lucide-react"
 import Link from "next/link"
 import { useGameModal } from "@/lib/use-game-modal"
 
@@ -16,7 +16,7 @@ type Position = { x: number; y: number }
 
 export default function LibraryGame() {
   const router = useRouter()
-  const { showAlert, showSuccess } = useGameModal()
+  const { showAlert, showSuccess, showConfirm } = useGameModal()
   const [gameState, setGameState] = useState(null)
   const [loading, setLoading] = useState(true)
   const [playing, setPlaying] = useState(false)
@@ -56,31 +56,66 @@ export default function LibraryGame() {
     return () => clearInterval(timer)
   }, [playing])
 
+  const isValidPosition = useCallback(
+    (x: number, y: number): boolean => {
+      // Check grid boundaries
+      if (x < 0 || x >= GRID_SIZE || y < 0 || y >= GRID_SIZE) {
+        return false
+      }
+
+      // Check if position collides with any wall
+      const hasWallCollision = walls.some((w) => w.x === x && w.y === y)
+
+      return !hasWallCollision
+    },
+    [walls],
+  )
+
   const generateMaze = () => {
     const newWalls: Position[] = []
     const newBooks: Position[] = []
 
-    // Generate random walls
+    // Generate random walls with better spacing
     for (let i = 0; i < 15; i++) {
-      const x = Math.floor(Math.random() * GRID_SIZE)
-      const y = Math.floor(Math.random() * GRID_SIZE)
-      if ((x !== 0 || y !== 0) && !newWalls.some((w) => w.x === x && w.y === y)) {
+      let attempts = 0
+      let x, y
+
+      do {
+        x = Math.floor(Math.random() * GRID_SIZE)
+        y = Math.floor(Math.random() * GRID_SIZE)
+        attempts++
+      } while (
+        attempts < 50 && // Prevent infinite loop
+        ((x === 0 && y === 0) || // Not on player spawn
+          (x === 0 && y === 1) || // Not next to player spawn
+          (x === 1 && y === 0) ||
+          newWalls.some((w) => w.x === x && w.y === y)) // No duplicate walls
+      )
+
+      if (attempts < 50) {
         newWalls.push({ x, y })
       }
     }
 
-    // Generate books
+    // Generate books with collision checking
     for (let i = 0; i < 8; i++) {
       let x, y
+      let attempts = 0
+
       do {
         x = Math.floor(Math.random() * GRID_SIZE)
         y = Math.floor(Math.random() * GRID_SIZE)
+        attempts++
       } while (
-        (x === 0 && y === 0) ||
-        newWalls.some((w) => w.x === x && w.y === y) ||
-        newBooks.some((b) => b.x === x && b.y === y)
+        attempts < 100 &&
+        ((x === 0 && y === 0) ||
+          newWalls.some((w) => w.x === x && w.y === y) ||
+          newBooks.some((b) => b.x === x && b.y === y))
       )
-      newBooks.push({ x, y })
+
+      if (attempts < 100) {
+        newBooks.push({ x, y })
+      }
     }
 
     setWalls(newWalls)
@@ -169,11 +204,16 @@ export default function LibraryGame() {
       const newX = playerPos.x + dx
       const newY = playerPos.y + dy
 
-      if (newX < 0 || newX >= GRID_SIZE || newY < 0 || newY >= GRID_SIZE) return
-      if (walls.some((w) => w.x === newX && w.y === newY)) return
+      // Use improved collision detection
+      if (!isValidPosition(newX, newY)) {
+        console.log("[v0] Movement blocked - invalid position or wall collision")
+        return
+      }
 
+      console.log("[v0] Moving player to:", { newX, newY })
       setPlayerPos({ x: newX, y: newY })
 
+      // Check for book collection
       const bookIndex = books.findIndex((b) => b.x === newX && b.y === newY)
       if (bookIndex !== -1) {
         const newBooks = books.filter((_, i) => i !== bookIndex)
@@ -182,6 +222,9 @@ export default function LibraryGame() {
         setScore(newScore)
         setTimeLeft(timeLeft + 2)
 
+        console.log("[v0] Book collected! Remaining:", newBooks.length)
+
+        // Check if all books collected
         if (newBooks.length === 0) {
           setTimeout(() => {
             endGame()
@@ -189,7 +232,7 @@ export default function LibraryGame() {
         }
       }
     },
-    [playing, playerPos, walls, books, score, timeLeft],
+    [playing, playerPos, isValidPosition, books, score, timeLeft],
   )
 
   useEffect(() => {
@@ -233,6 +276,31 @@ export default function LibraryGame() {
   }
 
   if (!gameState) return null
+
+  // Added exit button in top right corner
+  const handleExit = () => {
+    if (!playing) {
+      router.push("/game")
+      return
+    }
+
+    showConfirm(
+      "Ви впевнені що хочете вийти? Прогрес не збережеться.",
+      () => {
+        // Reset game state
+        setPlaying(false)
+        setScore(0)
+        setTimeLeft(45)
+        setPlayerPos({ x: 0, y: 0 })
+        setBooks([])
+        setWalls([])
+
+        // Return to dashboard
+        router.push("/game")
+      },
+      "Вийти з гри",
+    )
+  }
 
   if (!playing) {
     return (
@@ -295,6 +363,17 @@ export default function LibraryGame() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/5 p-4">
       <div className="container mx-auto max-w-2xl py-8">
+        <div className="fixed top-4 right-4 z-50">
+          <Button
+            onClick={handleExit}
+            variant="destructive"
+            size="lg"
+            className="h-12 w-12 rounded-full p-0 shadow-lg bg-gradient-to-br from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 border-2 border-red-300/50 backdrop-blur-sm animate-pulse-glow"
+          >
+            <X className="w-6 h-6" />
+          </Button>
+        </div>
+
         <div className="bg-card rounded-lg p-4 mb-4 flex justify-between items-center">
           <div className="text-center flex-1">
             <div className="text-3xl font-bold text-primary">{score}</div>
@@ -339,19 +418,21 @@ export default function LibraryGame() {
                 )),
               )}
 
+              {/* Walls with improved visual feedback */}
               {walls.map((wall, i) => (
                 <div
                   key={`wall-${i}`}
-                  className="absolute bg-foreground/80"
+                  className="absolute bg-foreground/80 rounded-sm"
                   style={{
-                    left: wall.x * CELL_SIZE,
-                    top: wall.y * CELL_SIZE,
-                    width: CELL_SIZE,
-                    height: CELL_SIZE,
+                    left: wall.x * CELL_SIZE + 2,
+                    top: wall.y * CELL_SIZE + 2,
+                    width: CELL_SIZE - 4,
+                    height: CELL_SIZE - 4,
                   }}
                 />
               ))}
 
+              {/* Books */}
               {books.map((book, i) => (
                 <div
                   key={`book-${i}`}
@@ -367,8 +448,9 @@ export default function LibraryGame() {
                 </div>
               ))}
 
+              {/* Player with improved centering */}
               <div
-                className="absolute bg-primary rounded-full transition-all duration-150 flex items-center justify-center text-xl"
+                className="absolute bg-primary rounded-full transition-all duration-150 flex items-center justify-center text-xl z-10"
                 style={{
                   left: playerPos.x * CELL_SIZE + 5,
                   top: playerPos.y * CELL_SIZE + 5,
@@ -382,6 +464,7 @@ export default function LibraryGame() {
           </div>
         </GameCard>
 
+        {/* Mobile controls */}
         <div className="mt-4 grid grid-cols-3 gap-2 max-w-xs mx-auto">
           <div />
           <Button onClick={() => movePlayer(0, -1)} variant="outline" size="lg">

@@ -5,8 +5,9 @@ import { Canvas } from "@react-three/fiber"
 import { KeyboardControls, PointerLockControls } from "@react-three/drei"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
-import { ChevronLeft, Package, Map, MessageCircle, X, Navigation } from "lucide-react"
+import { ChevronLeft, Package, Map, MessageCircle, X, Navigation, LogOut, Compass } from "lucide-react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Player } from "@/components/polytechnic-3d/player"
 import { PolytechnicWorld } from "@/components/polytechnic-3d/world"
 import { NPCs } from "@/components/polytechnic-3d/npcs"
@@ -20,6 +21,7 @@ import { useGameModal } from "@/lib/use-game-modal"
 import * as THREE from "three"
 
 export default function Polytechnic3DGame() {
+  const router = useRouter()
   const [gameState, setGameState] = useState<GameState | null>(null)
   const [quests, setQuests] = useState<QuestItem[]>(initialQuests)
   const [inventory, setInventory] = useState<string[]>([])
@@ -32,18 +34,35 @@ export default function Polytechnic3DGame() {
   const [controlsLocked, setControlsLocked] = useState(false)
   const [playerPosition, setPlayerPosition] = useState(new THREE.Vector3(0, 1.6, -25))
   const [showMinimap, setShowMinimap] = useState(true)
-  const { showSuccess } = useGameModal()
+  const [playerDirection, setPlayerDirection] = useState<string>("N")
+  const [coinsCollected, setCoinsCollected] = useState(0)
+  const { showSuccess, showConfirm } = useGameModal()
 
   useEffect(() => {
     const loadState = async () => {
-      const saved = await loadGameState()
-      if (saved) {
-        setGameState(saved)
-        setInventory(saved.inventory || [])
+      try {
+        const saved = await loadGameState()
+        if (saved) {
+          setGameState(saved)
+          setInventory(saved.inventory || [])
+        }
+      } catch (error) {
+        console.log("[v0] Failed to load game state, using defaults:", error)
+        // Use default state if loading fails
       }
     }
     loadState()
   }, [])
+
+  const handleExit = () => {
+    showConfirm(
+      "Ти впевнений що хочеш вийти? Весь прогрес буде збережено.",
+      () => {
+        router.push("/game")
+      },
+      "Вийти з 3D пригоди",
+    )
+  }
 
   const handleQuestComplete = async (questId: string) => {
     const quest = quests.find((q) => q.id === questId)
@@ -85,7 +104,15 @@ export default function Polytechnic3DGame() {
     if (!inventory.includes(itemId)) {
       setInventory((prev) => [...prev, itemId])
 
-      // Update quest progress
+      if (itemId === "coin") {
+        setCoinsCollected((prev) => prev + 1)
+        if (gameState) {
+          const updatedState = addMoney(gameState, 10)
+          setGameState(updatedState)
+          saveGameState(updatedState)
+        }
+      }
+
       const updatedQuests = quests.map((quest) => {
         const updatedObjectives = quest.objectives.map((obj) => {
           if (obj.type === "collect_items" && obj.target === itemId && obj.current < obj.required) {
@@ -107,7 +134,6 @@ export default function Polytechnic3DGame() {
   }
 
   const handleInteraction = (type: string, id: string) => {
-    // Update quest progress for interactions
     const updatedQuests = quests.map((quest) => {
       const updatedObjectives = quest.objectives.map((obj) => {
         if (obj.type === "interact" && obj.target === id && obj.current < obj.required) {
@@ -146,14 +172,13 @@ export default function Polytechnic3DGame() {
   const activeQuests = quests.filter((q) => !q.isCompleted)
   const completedQuests = quests.filter((q) => q.isCompleted)
 
-  // Quest markers for minimap
   const questMarkers = activeQuests.map((quest) => ({
-    position: new THREE.Vector3(-25, 0, 17), // Simplified position
+    position: new THREE.Vector3(-25, 0, 17),
     label: quest.title,
   }))
 
   return (
-    <div className="h-screen w-screen relative overflow-hidden bg-gradient-to-b from-sky-200 to-sky-100">
+    <div className="h-screen w-screen relative overflow-hidden bg-gradient-to-b from-blue-200 via-purple-100 to-pink-100">
       <KeyboardControls
         map={[
           { name: "forward", keys: ["ArrowUp", "KeyW"] },
@@ -169,34 +194,37 @@ export default function Polytechnic3DGame() {
           shadows
           camera={{ fov: 75, near: 0.1, far: 1000 }}
           className="h-full w-full"
-          gl={{ antialias: true, alpha: false }}
+          gl={{ antialias: true, alpha: false, powerPreference: "high-performance" }}
         >
           <Suspense fallback={null}>
             <color attach="background" args={["#87ceeb"]} />
-            <ambientLight intensity={0.8} />
+            <ambientLight intensity={0.6} />
             <directionalLight
               castShadow
-              position={[50, 80, 25]}
-              intensity={1.2}
-              shadow-mapSize-width={2048}
-              shadow-mapSize-height={2048}
-              shadow-camera-far={150}
-              shadow-camera-left={-60}
-              shadow-camera-right={60}
-              shadow-camera-top={60}
-              shadow-camera-bottom={-60}
+              position={[50, 100, 25]}
+              intensity={1.5}
+              shadow-mapSize-width={4096}
+              shadow-mapSize-height={4096}
+              shadow-camera-far={200}
+              shadow-camera-left={-80}
+              shadow-camera-right={80}
+              shadow-camera-top={80}
+              shadow-camera-bottom={-80}
               shadow-bias={-0.0001}
+              color="#ffeaa7"
             />
-            <directionalLight position={[-50, 50, -25]} intensity={0.4} color="#fff8dc" />
-            <hemisphereLight args={["#87ceeb", "#8fbc8f", 0.6]} />
-            <pointLight position={[0, 15, 0]} intensity={0.8} color="#ffffff" distance={50} decay={2} />
-            <fog attach="fog" args={["#b0d4f1", 80, 150]} />
+            <directionalLight position={[-50, 60, -25]} intensity={0.5} color="#74b9ff" />
+            <hemisphereLight args={["#74b9ff", "#55efc4", 0.7]} />
+            <pointLight position={[0, 20, 0]} intensity={1.5} color="#fff9e6" distance={60} decay={2} />
+            <spotLight position={[0, 30, -15]} angle={0.6} penumbra={0.5} intensity={1.2} castShadow color="#ffffff" />
+            <fog attach="fog" args={["#b0d4f1", 100, 180]} />
 
             <PolytechnicWorld />
             <Player
               controlsLocked={controlsLocked}
               onInteractionPrompt={setInteractionPrompt}
               onPlayerMove={setPlayerPosition}
+              onDirectionChange={setPlayerDirection}
             />
             <NPCs onDialogue={handleNPCDialogue} onInteractionPrompt={setInteractionPrompt} />
             <InteractiveObjects
@@ -219,19 +247,23 @@ export default function Polytechnic3DGame() {
             <Button
               variant="outline"
               size="sm"
-              className="gap-2 bg-white/95 backdrop-blur-md border-2 border-purple-500 hover:bg-purple-50 shadow-lg font-bold text-base"
+              className="gap-2 bg-white/95 backdrop-blur-md border-2 border-purple-500 hover:bg-purple-50 shadow-lg font-bold text-base transition-all hover:scale-105"
             >
               <ChevronLeft className="w-5 h-5" />
-              Повернутись
+              Назад
             </Button>
           </Link>
 
           <div className="flex gap-2">
+            <div className="pointer-events-auto bg-white/95 backdrop-blur-md border-2 border-blue-500 rounded-lg px-4 py-2 shadow-lg flex items-center gap-2">
+              <Compass className="w-5 h-5 text-blue-600" />
+              <span className="font-black text-blue-700 text-base">{playerDirection}</span>
+            </div>
             <Button
               variant="outline"
               size="sm"
               onClick={() => setShowMinimap(!showMinimap)}
-              className="pointer-events-auto gap-2 bg-white/95 backdrop-blur-md border-2 border-cyan-500 hover:bg-cyan-50 shadow-lg font-bold text-base"
+              className="pointer-events-auto gap-2 bg-white/95 backdrop-blur-md border-2 border-cyan-500 hover:bg-cyan-50 shadow-lg font-bold text-base transition-all hover:scale-105"
             >
               <Navigation className="w-5 h-5" />
               Карта
@@ -240,7 +272,7 @@ export default function Polytechnic3DGame() {
               variant="outline"
               size="sm"
               onClick={() => setShowInventory(!showInventory)}
-              className="pointer-events-auto gap-2 bg-white/95 backdrop-blur-md border-2 border-yellow-500 hover:bg-yellow-50 shadow-lg font-bold text-base"
+              className="pointer-events-auto gap-2 bg-white/95 backdrop-blur-md border-2 border-yellow-500 hover:bg-yellow-50 shadow-lg font-bold text-base transition-all hover:scale-105"
             >
               <Package className="w-5 h-5" />
               Інвентар ({inventory.length})
@@ -249,12 +281,28 @@ export default function Polytechnic3DGame() {
               variant="outline"
               size="sm"
               onClick={() => setShowQuests(!showQuests)}
-              className="pointer-events-auto gap-2 bg-white/95 backdrop-blur-md border-2 border-green-500 hover:bg-green-50 shadow-lg font-bold text-base"
+              className="pointer-events-auto gap-2 bg-white/95 backdrop-blur-md border-2 border-green-500 hover:bg-green-50 shadow-lg font-bold text-base transition-all hover:scale-105"
             >
               <Map className="w-5 h-5" />
               Квести ({activeQuests.length})
             </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExit}
+              className="pointer-events-auto gap-2 bg-red-500/95 backdrop-blur-md border-2 border-red-600 hover:bg-red-600 text-white shadow-lg font-bold text-base transition-all hover:scale-105 animate-pulse-glow"
+            >
+              <LogOut className="w-5 h-5" />
+              Вийти
+            </Button>
           </div>
+        </div>
+      </div>
+
+      <div className="absolute top-20 left-4 bg-gradient-to-br from-purple-500/95 to-cyan-500/95 backdrop-blur-md text-white p-4 rounded-2xl text-sm pointer-events-none border-4 border-white/50 shadow-2xl z-10">
+        <div className="flex items-center gap-2 mb-2">
+          <Package className="w-6 h-6 text-yellow-300" />
+          <span className="font-black text-xl">{coinsCollected} монет зібрано</span>
         </div>
       </div>
 
@@ -274,11 +322,11 @@ export default function Polytechnic3DGame() {
         </div>
       )}
 
-      <div className="absolute bottom-4 left-4 bg-white/95 backdrop-blur-md text-gray-900 p-5 rounded-2xl text-sm pointer-events-none border-4 border-purple-500 shadow-2xl z-10">
+      <div className="absolute bottom-4 left-4 bg-gradient-to-br from-white/95 to-purple-100/95 backdrop-blur-md text-gray-900 p-5 rounded-2xl text-sm pointer-events-none border-4 border-purple-500 shadow-2xl z-10">
         <h3
           className="font-black text-purple-700 mb-3 text-lg uppercase tracking-wide"
           style={{
-            textShadow: "0 0 10px rgba(139, 92, 246, 0.3), 1px 1px 2px rgba(0,0,0,0.2)",
+            textShadow: "0 0 10px rgba(139, 92, 246, 0.5), 2px 2px 4px rgba(0,0,0,0.3)",
           }}
         >
           Керування

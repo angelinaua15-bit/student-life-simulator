@@ -54,24 +54,34 @@ export default function QuestsPage() {
       inventory: quest.rewards.items ? [...gameState.inventory, ...quest.rewards.items] : gameState.inventory,
     }
 
+    let { experience, level, experienceToNext } = updatedState.stats
+    while (experience >= experienceToNext) {
+      experience -= experienceToNext
+      level++
+      experienceToNext = Math.floor(100 * Math.pow(1.5, level - 1))
+    }
+
+    updatedState.stats.experience = experience
+    updatedState.stats.level = level
+    updatedState.stats.experienceToNext = experienceToNext
+
     await saveGameState(updatedState)
     setGameState(updatedState)
 
     showSuccess(
       `Квест завершено!\n+${quest.rewards.experience} XP\n+${quest.rewards.money} монет${
         quest.rewards.items ? `\n+${quest.rewards.items.length} предметів` : ""
-      }`,
+      }${level > gameState.stats.level ? `\n🎉 Новий рівень: ${level}!` : ""}`,
       "Нагорода отримана!",
     )
 
-    // Refresh quests
     const available = getAvailableQuests(
       updatedState.stats.level,
       updatedState.completedEvents,
       updatedState.personalityType,
     )
-    setStoryQuests(available.filter((q) => q.type === "story"))
-    setSideQuests(available.filter((q) => q.type === "side"))
+    setStoryQuests(available.filter((q) => q.type === "story").map((q) => checkQuestProgress(q, updatedState)))
+    setSideQuests(available.filter((q) => q.type === "side").map((q) => checkQuestProgress(q, updatedState)))
   }
 
   const renderQuest = (quest: Quest) => {

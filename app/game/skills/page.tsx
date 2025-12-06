@@ -112,8 +112,13 @@ export default function SkillsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/5">
-      <header className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-10">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20 dark:from-slate-950 dark:via-blue-950/20 dark:to-purple-950/10">
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-20 left-20 w-96 h-96 bg-gradient-to-br from-blue-200/10 to-cyan-200/10 rounded-full blur-3xl animate-soft-float" />
+        <div className="absolute bottom-40 right-40 w-[500px] h-[500px] bg-gradient-to-br from-purple-200/10 to-pink-200/10 rounded-full blur-3xl animate-soft-float delay-300" />
+      </div>
+
+      <header className="border-b bg-card/80 backdrop-blur-xl sticky top-0 z-10 shadow-sm">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <Link href="/game">
@@ -128,8 +133,8 @@ export default function SkillsPage() {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8">
-        <Card className="p-6 mb-6">
+      <main className="container mx-auto px-4 py-8 relative z-10">
+        <Card className="p-6 mb-6 bg-card/80 backdrop-blur-sm border border-border rounded-2xl shadow-lg">
           <h2 className="text-xl font-bold mb-2">Система Навичок RPG</h2>
           <p className="text-muted-foreground">
             Прокачуй свої навички, щоб отримати унікальні бонуси та відкрити нові можливості!
@@ -144,13 +149,18 @@ export default function SkillsPage() {
             const Icon = iconMap[skill.icon]
 
             return (
-              <Card key={skill.id} className="p-6">
-                <div className={`p-4 rounded-lg bg-gradient-to-br ${skill.color} mb-4`}>
-                  <div className="flex items-center justify-between text-white">
-                    <Icon className="w-8 h-8" />
+              <Card
+                key={skill.id}
+                className="p-6 bg-card/80 backdrop-blur-sm border border-border rounded-2xl shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all"
+              >
+                <div
+                  className={`p-4 rounded-xl bg-gradient-to-br ${skill.color} bg-opacity-10 mb-4 border border-border`}
+                >
+                  <div className="flex items-center justify-between">
+                    <Icon className="w-8 h-8 text-foreground" />
                     <div className="text-right">
                       <div className="text-2xl font-bold">Рівень {level}</div>
-                      <div className="text-xs opacity-90">/ {skill.maxLevel}</div>
+                      <div className="text-xs text-muted-foreground">/ {skill.maxLevel}</div>
                     </div>
                   </div>
                 </div>
@@ -166,7 +176,7 @@ export default function SkillsPage() {
                   <Progress value={progress} className="h-2" />
                 </div>
 
-                <div className="bg-muted/50 rounded-lg p-3 mb-4">
+                <div className="bg-muted/30 rounded-xl p-3 mb-4 border border-border">
                   <div className="text-xs font-semibold mb-2">Бонуси:</div>
                   <ul className="text-xs space-y-1">
                     {skill.benefits.map((benefit, index) => (
@@ -179,7 +189,7 @@ export default function SkillsPage() {
                 </div>
 
                 <Button
-                  className="w-full"
+                  className="w-full rounded-xl"
                   onClick={() => handleTrainSkill(skill.id)}
                   disabled={level >= skill.maxLevel}
                 >

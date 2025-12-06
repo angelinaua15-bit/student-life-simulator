@@ -11,6 +11,7 @@ export type LocationId =
 export type TimeOfDay = "morning" | "afternoon" | "evening" | "night"
 export type DayOfWeek = "monday" | "tuesday" | "wednesday" | "thursday" | "friday" | "saturday" | "sunday"
 export type Season = "autumn" | "winter" | "spring" | "summer"
+export type RegionId = "galician" | "podillian" | "slobozhan" | "bukovynian" | "capital"
 
 export interface Location {
   id: LocationId
@@ -23,6 +24,23 @@ export interface Location {
   color: string
 }
 
+export interface Region {
+  id: RegionId
+  name: string
+  description: string
+  shortDesc: string
+  bonus: string
+  bonusEffect: {
+    coinMultiplier?: number
+    stressReduction?: number
+    energyRegen?: number
+    randomBonusChance?: number
+    xpMultiplier?: number
+  }
+  color: string
+  icon: string
+}
+
 export interface WorldState {
   currentLocation: LocationId
   currentDay: DayOfWeek
@@ -31,6 +49,7 @@ export interface WorldState {
   gameDay: number
   unlockedLocations: LocationId[]
   visitedLocations: LocationId[]
+  selectedRegion?: RegionId
 }
 
 export const LOCATIONS: Record<LocationId, Location> = {
@@ -116,6 +135,59 @@ export const LOCATIONS: Record<LocationId, Location> = {
   },
 }
 
+export const REGIONS: Record<RegionId, Region> = {
+  galician: {
+    id: "galician",
+    name: "Галицький регіон",
+    description: "Історичне серце західної України з багатою культурною спадщиною",
+    shortDesc: "Підприємливість та традиції",
+    bonus: "+5% до заробітку монет",
+    bonusEffect: { coinMultiplier: 1.05 },
+    color: "from-amber-500 to-orange-600",
+    icon: "🏰",
+  },
+  podillian: {
+    id: "podillian",
+    name: "Подільський регіон",
+    description: "Мальовничі краєвиди та спокійна атмосфера для навчання",
+    shortDesc: "Спокій та зосередженість",
+    bonus: "-10% стресу від подій",
+    bonusEffect: { stressReduction: 0.9 },
+    color: "from-green-500 to-emerald-600",
+    icon: "🌾",
+  },
+  slobozhan: {
+    id: "slobozhan",
+    name: "Слобожанський регіон",
+    description: "Динамічний та енергійний край з сильними традиціями",
+    shortDesc: "Енергія та витривалість",
+    bonus: "+15% швидкість відновлення енергії",
+    bonusEffect: { energyRegen: 1.15 },
+    color: "from-blue-500 to-cyan-600",
+    icon: "⚡",
+  },
+  bukovynian: {
+    id: "bukovynian",
+    name: "Буковинський регіон",
+    description: "Край сюрпризів та неочікуваних можливостей",
+    shortDesc: "Удача та сюрпризи",
+    bonus: "+10% шанс випадкових бонусів",
+    bonusEffect: { randomBonusChance: 1.1 },
+    color: "from-purple-500 to-pink-600",
+    icon: "🍀",
+  },
+  capital: {
+    id: "capital",
+    name: "Столичний регіон",
+    description: "Центр освіти та інновацій з найкращими можливостями",
+    shortDesc: "Престиж та досвід",
+    bonus: "+8% XP за успішні події",
+    bonusEffect: { xpMultiplier: 1.08 },
+    color: "from-red-500 to-rose-600",
+    icon: "🏛️",
+  },
+}
+
 export const DAY_NAMES: Record<DayOfWeek, string> = {
   monday: "Понеділок",
   tuesday: "Вівторок",
@@ -149,6 +221,7 @@ export function getDefaultWorldState(): WorldState {
     gameDay: 1,
     unlockedLocations: ["campus", "dormitory"],
     visitedLocations: ["campus"],
+    selectedRegion: undefined,
   }
 }
 
@@ -231,5 +304,36 @@ export function getSeasonTheme(season: Season) {
         text: "text-yellow-900",
         accent: "from-yellow-500 to-amber-600",
       }
+  }
+}
+
+export function applyRegionBonus(
+  worldState: WorldState,
+  type: "coins" | "stress" | "energy" | "xp",
+  baseValue: number,
+): number {
+  if (!worldState.selectedRegion) return baseValue
+
+  const region = REGIONS[worldState.selectedRegion]
+  const effect = region.bonusEffect
+
+  switch (type) {
+    case "coins":
+      return baseValue * (effect.coinMultiplier || 1)
+    case "stress":
+      return baseValue * (effect.stressReduction || 1)
+    case "energy":
+      return baseValue * (effect.energyRegen || 1)
+    case "xp":
+      return baseValue * (effect.xpMultiplier || 1)
+    default:
+      return baseValue
+  }
+}
+
+export function selectRegion(worldState: WorldState, regionId: RegionId): WorldState {
+  return {
+    ...worldState,
+    selectedRegion: regionId,
   }
 }

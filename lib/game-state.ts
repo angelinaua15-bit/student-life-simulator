@@ -1,6 +1,5 @@
 "use client"
 
-import { createClient } from "@/lib/supabase/client"
 import { getStatusForLevel } from "@/lib/rewards-data"
 import { generatePlayerId } from "./player-id-system"
 import { checkAchievements } from "./achievements-tracker"
@@ -82,6 +81,7 @@ export interface GameState {
     lastEncounter: number
     currentChallengeId?: string
   }
+  lastInterestClaim?: number
 }
 
 const DEFAULT_STATE: GameState = {
@@ -145,112 +145,21 @@ const DEFAULT_STATE: GameState = {
     challengesLost: 0,
     lastEncounter: 0,
   },
+  lastInterestClaim: undefined,
 }
 
 export async function loadGameState(): Promise<GameState | null> {
   if (typeof window !== "undefined") {
     const saved = localStorage.getItem("evo-student-state")
     if (saved) {
-      return JSON.parse(saved)
+      const state = JSON.parse(saved)
+
+      // Database sync disabled to avoid RLS policy errors
+      return state
     }
   }
 
   return null
-}
-
-async function syncWithSupabase(): Promise<void> {
-  const supabase = createClient()
-
-  if (!supabase) {
-    return
-  }
-
-  try {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user) {
-      return
-    }
-
-    const { data: profile, error } = await supabase.from("player_profiles").select("*").eq("id", user.id).single()
-
-    if (error || !profile) {
-      return
-    }
-
-    // Update localStorage with Supabase data if it's newer
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("evo-student-state")
-      if (saved) {
-        const localState = JSON.parse(saved)
-        const supabaseTime = new Date(profile.updated_at).getTime()
-        if (supabaseTime > localState.lastPlayed) {
-          // Supabase data is newer, update localStorage
-          const syncedState: GameState = {
-            playerId: profile.id,
-            playerName: profile.nickname,
-            stats: {
-              stress: profile.stress,
-              happiness: profile.happiness,
-              energy: profile.energy,
-              money: profile.coins,
-              bankBalance: profile.bank_balance,
-              level: profile.level,
-              experience: profile.experience,
-              experienceToNext: Math.floor(100 * Math.pow(1.5, profile.level - 1)),
-            },
-            completedEvents: profile.completed_events || [],
-            achievements: profile.achievements || [],
-            inventory: profile.inventory || [],
-            lastPlayed: supabaseTime,
-            totalPlayTime: profile.total_play_time,
-            minigameHighScores: {
-              cafe: profile.cafe_high_score,
-              library: profile.library_high_score,
-              carePackages: profile.care_packages_high_score,
-            },
-            settings: {
-              soundEnabled: profile.sound_enabled,
-              musicEnabled: profile.music_enabled,
-              language: profile.language,
-              graphicsQuality: profile.graphics_quality,
-            },
-            skin: profile.skin,
-            status: profile.status,
-            bio: profile.bio,
-            faculty: profile.faculty,
-            group: profile.group,
-            social: profile.social,
-            unclaimedRewards: profile.unclaimed_rewards,
-            activeBoosters: profile.active_boosters,
-            personalityType: profile.personality_type,
-            eventCompletions: profile.event_completions,
-            claimedEventRewards: profile.claimed_event_rewards,
-            polytechnic3DProgress: {
-              completedQuests: profile.polytechnic3d_completed_quests || [],
-              collectedItems: profile.polytechnic3d_collected_items || [],
-              visitedRooms: profile.polytechnic3d_visited_rooms || [],
-            },
-            skills: profile.skills,
-            friends: profile.friends,
-            innerVoiceHistory: profile.inner_voice_history || [],
-            shadowStudent: {
-              initialized: profile.shadow_student_initialized ?? false,
-              challengesWon: profile.shadow_student_challenges_won ?? 0,
-              challengesLost: profile.shadow_student_challenges_lost ?? 0,
-              lastEncounter: profile.shadow_student_last_encounter ?? 0,
-              currentChallengeId: profile.shadow_student_current_challenge_id,
-            },
-          }
-          localStorage.setItem("evo-student-state", JSON.stringify(syncedState))
-        }
-      }
-    }
-  } catch (error: any) {
-    // Silently fail - localStorage is the primary data source
-  }
 }
 
 export async function saveGameState(state: GameState): Promise<void> {
@@ -261,73 +170,7 @@ export async function saveGameState(state: GameState): Promise<void> {
     localStorage.setItem("evo-student-state", JSON.stringify(stateToSave))
   }
 
-  const supabase = createClient()
-  if (!supabase) {
-    return
-  }
-
-  try {
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser().catch(() => ({
-      data: { user: null },
-      error: new Error("Auth unavailable"),
-    }))
-
-    if (userError || !user) {
-      return
-    }
-
-    const { error } = await supabase
-      .from("player_profiles")
-      .update({
-        nickname: stateToSave.playerName,
-        stress: Math.round(stateToSave.stats.stress * 100) / 100,
-        happiness: Math.round(stateToSave.stats.happiness * 100) / 100,
-        energy: Math.round(stateToSave.stats.energy * 100) / 100,
-        coins: Math.floor(stateToSave.stats.money),
-        bank_balance: Math.floor(stateToSave.stats.bankBalance),
-        level: Math.floor(stateToSave.stats.level),
-        experience: Math.floor(stateToSave.stats.experience),
-        completed_events: stateToSave.completedEvents,
-        achievements: stateToSave.achievements,
-        inventory: stateToSave.inventory,
-        total_play_time: Math.floor(stateToSave.totalPlayTime),
-        cafe_high_score: Math.floor(stateToSave.minigameHighScores.cafe),
-        library_high_score: Math.floor(stateToSave.minigameHighScores.library),
-        care_packages_high_score: Math.floor(stateToSave.minigameHighScores.carePackages),
-        sound_enabled: stateToSave.settings?.soundEnabled ?? true,
-        music_enabled: stateToSave.settings?.musicEnabled ?? true,
-        language: stateToSave.settings?.language ?? "ua",
-        graphics_quality: stateToSave.settings?.graphicsQuality ?? "high",
-        skin: stateToSave.skin ?? "default",
-        status: stateToSave.status,
-        bio: stateToSave.bio,
-        faculty: stateToSave.faculty,
-        group: stateToSave.group,
-        social: stateToSave.social,
-        unclaimed_rewards: stateToSave.unclaimedRewards,
-        active_boosters: stateToSave.activeBoosters,
-        personality_type: stateToSave.personalityType ?? "default",
-        event_completions: stateToSave.eventCompletions,
-        claimed_event_rewards: stateToSave.claimedEventRewards,
-        polytechnic3d_completed_quests: stateToSave.polytechnic3DProgress?.completedQuests,
-        polytechnic3d_collected_items: stateToSave.polytechnic3DProgress?.collectedItems,
-        polytechnic3d_visited_rooms: stateToSave.polytechnic3DProgress?.visitedRooms,
-        skills: stateToSave.skills,
-        friends: stateToSave.friends,
-        inner_voice_history: stateToSave.innerVoiceHistory,
-        shadow_student_initialized: stateToSave.shadowStudent?.initialized ?? false,
-        shadow_student_challenges_won: stateToSave.shadowStudent?.challengesWon ?? 0,
-        shadow_student_challenges_lost: stateToSave.shadowStudent?.challengesLost ?? 0,
-        shadow_student_last_encounter: stateToSave.shadowStudent?.lastEncounter ?? 0,
-        shadow_student_current_challenge_id: stateToSave.shadowStudent?.currentChallengeId,
-      })
-      .eq("id", user.id)
-  } catch (error: any) {
-    // Silently ignore all errors
-  }
+  // localStorage only to avoid RLS errors
 }
 
 export async function createNewGame(playerName: string, skin = "default"): Promise<GameState> {
@@ -345,58 +188,14 @@ export async function createNewGame(playerName: string, skin = "default"): Promi
       challengesLost: 0,
       lastEncounter: 0,
     },
+    lastInterestClaim: undefined,
   }
 
   if (typeof window !== "undefined") {
     localStorage.setItem("evo-student-state", JSON.stringify(newState))
   }
 
-  const supabase = createClient()
-  if (!supabase) {
-    return newState
-  }
-
-  try {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser().catch(() => ({
-      data: { user: null },
-    }))
-
-    if (user) {
-      await supabase
-        .from("player_profiles")
-        .update({
-          nickname: playerName,
-          skin: skin,
-          status: newState.status,
-          unclaimed_rewards: newState.unclaimedRewards,
-          active_boosters: newState.activeBoosters,
-          personality_type: newState.personalityType,
-          event_completions: newState.eventCompletions,
-          claimed_event_rewards: newState.claimedEventRewards,
-          polytechnic3d_completed_quests: newState.polytechnic3DProgress?.completedQuests,
-          polytechnic3d_collected_items: newState.polytechnic3DProgress?.collectedItems,
-          polytechnic3d_visited_rooms: newState.polytechnic3DProgress?.visitedRooms,
-          skills: newState.skills,
-          friends: newState.friends,
-          inner_voice_history: newState.innerVoiceHistory,
-          shadow_student_initialized: newState.shadowStudent?.initialized ?? false,
-          shadow_student_challenges_won: newState.shadowStudent?.challengesWon ?? 0,
-          shadow_student_challenges_lost: newState.shadowStudent?.challengesLost ?? 0,
-          shadow_student_last_encounter: newState.shadowStudent?.lastEncounter ?? 0,
-          shadow_student_current_challenge_id: newState.shadowStudent?.currentChallengeId,
-          bio: newState.bio,
-          faculty: newState.faculty,
-          group: newState.group,
-          social: newState.social,
-        })
-        .eq("id", user.id)
-    }
-  } catch (error) {
-    // Silently ignore - localStorage is the source of truth
-  }
-
+  // localStorage only
   return newState
 }
 

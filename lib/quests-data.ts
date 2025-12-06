@@ -273,7 +273,29 @@ export function checkQuestProgress(quest: Quest, gameState: any): Quest {
         current = gameState.stats.money
         break
       case "minigame":
-        // This should be tracked separately in game state
+        // Check if minigame was played based on high scores
+        const gameType = obj.id.replace("play-", "").replace("-daily", "")
+        if (gameState.minigameHighScores[gameType] > 0) {
+          current = 1
+        }
+        break
+      case "location":
+        // Track location visits in completedEvents
+        if (obj.id.includes("bank") && gameState.completedEvents.includes("visited-bank")) {
+          current = 1
+        }
+        if (obj.id.includes("mentor") && gameState.completedEvents.includes("visited-mentor")) {
+          current = 1
+        }
+        break
+      case "custom":
+        // Custom tracking for special objectives
+        if (obj.id.includes("reduce-stress") && gameState.stats.stress <= 20) {
+          current = 1
+        }
+        if (obj.id.includes("max-happiness") && gameState.stats.happiness >= 100) {
+          current = 1
+        }
         break
     }
 

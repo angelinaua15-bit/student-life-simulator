@@ -3,80 +3,81 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Complete redesign from neon/cyberpunk to clean modern minimalist style */
 :root {
-  /* Updated color palette for vibrant, energetic game aesthetic */
-  --background: oklch(0.98 0.01 280);
-  --foreground: oklch(0.15 0.02 280);
+  /* Modern soft color palette inspired by Apple/Notion design */
+  --background: oklch(0.99 0.005 280);
+  --foreground: oklch(0.2 0.01 280);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.15 0.02 280);
+  --card-foreground: oklch(0.2 0.01 280);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.15 0.02 280);
-  --primary: oklch(0.55 0.22 280); /* Vibrant purple */
-  --primary-foreground: oklch(0.98 0.01 280);
-  --secondary: oklch(0.65 0.18 180); /* Bright cyan */
-  --secondary-foreground: oklch(0.98 0.01 280);
-  --muted: oklch(0.95 0.01 280);
-  --muted-foreground: oklch(0.45 0.02 280);
-  --accent: oklch(0.75 0.2 50); /* Yellow accent */
-  --accent-foreground: oklch(0.15 0.02 280);
-  --destructive: oklch(0.6 0.25 15);
-  --destructive-foreground: oklch(0.98 0.01 280);
-  --border: oklch(0.9 0.01 280);
-  --input: oklch(0.9 0.01 280);
-  --ring: oklch(0.55 0.22 280);
-  --success: oklch(0.65 0.18 145); /* Success green */
-  --warning: oklch(0.7 0.2 70); /* Warning orange */
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --radius: 1rem;
+  --popover-foreground: oklch(0.2 0.01 280);
+  --primary: oklch(0.5 0.14 250); /* Soft blue primary */
+  --primary-foreground: oklch(0.99 0.005 280);
+  --secondary: oklch(0.7 0.08 160); /* Soft mint secondary */
+  --secondary-foreground: oklch(0.2 0.01 280);
+  --muted: oklch(0.96 0.005 280);
+  --muted-foreground: oklch(0.5 0.01 280);
+  --accent: oklch(0.8 0.1 80); /* Soft peach accent */
+  --accent-foreground: oklch(0.2 0.01 280);
+  --destructive: oklch(0.55 0.18 20);
+  --destructive-foreground: oklch(0.99 0.005 280);
+  --border: oklch(0.92 0.005 280);
+  --input: oklch(0.95 0.005 280);
+  --ring: oklch(0.5 0.14 250);
+  --success: oklch(0.6 0.12 150);
+  --warning: oklch(0.7 0.14 70);
+  --chart-1: oklch(0.6 0.15 250);
+  --chart-2: oklch(0.65 0.12 160);
+  --chart-3: oklch(0.55 0.1 200);
+  --chart-4: oklch(0.75 0.12 80);
+  --chart-5: oklch(0.7 0.15 300);
+  --radius: 1.25rem; /* Larger radius for softer look */
   --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.2 0 0);
+  --sidebar-primary: oklch(0.5 0.14 250);
   --sidebar-primary-foreground: oklch(0.985 0 0);
   --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar-accent-foreground: oklch(0.2 0 0);
+  --sidebar-border: oklch(0.94 0 0);
+  --sidebar-ring: oklch(0.75 0 0);
 }
 
 .dark {
-  --background: oklch(0.12 0.02 280);
-  --foreground: oklch(0.95 0.01 280);
-  --card: oklch(0.15 0.02 280);
-  --card-foreground: oklch(0.95 0.01 280);
-  --popover: oklch(0.15 0.02 280);
-  --popover-foreground: oklch(0.95 0.01 280);
-  --primary: oklch(0.65 0.22 280);
-  --primary-foreground: oklch(0.12 0.02 280);
-  --secondary: oklch(0.5 0.18 180);
-  --secondary-foreground: oklch(0.95 0.01 280);
-  --muted: oklch(0.2 0.02 280);
-  --muted-foreground: oklch(0.65 0.02 280);
-  --accent: oklch(0.75 0.2 50);
-  --accent-foreground: oklch(0.12 0.02 280);
-  --destructive: oklch(0.5 0.25 15);
-  --destructive-foreground: oklch(0.95 0.01 280);
-  --border: oklch(0.25 0.02 280);
-  --input: oklch(0.25 0.02 280);
-  --ring: oklch(0.65 0.22 280);
-  --success: oklch(0.55 0.18 145);
-  --warning: oklch(0.65 0.2 70);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
+  --background: oklch(0.15 0.01 280);
+  --foreground: oklch(0.95 0.005 280);
+  --card: oklch(0.18 0.01 280);
+  --card-foreground: oklch(0.95 0.005 280);
+  --popover: oklch(0.18 0.01 280);
+  --popover-foreground: oklch(0.95 0.005 280);
+  --primary: oklch(0.6 0.14 250);
+  --primary-foreground: oklch(0.15 0.01 280);
+  --secondary: oklch(0.55 0.08 160);
+  --secondary-foreground: oklch(0.95 0.005 280);
+  --muted: oklch(0.22 0.01 280);
+  --muted-foreground: oklch(0.65 0.01 280);
+  --accent: oklch(0.7 0.1 80);
+  --accent-foreground: oklch(0.15 0.01 280);
+  --destructive: oklch(0.5 0.18 20);
+  --destructive-foreground: oklch(0.95 0.005 280);
+  --border: oklch(0.26 0.01 280);
+  --input: oklch(0.24 0.01 280);
+  --ring: oklch(0.6 0.14 250);
+  --success: oklch(0.55 0.12 150);
+  --warning: oklch(0.65 0.14 70);
+  --chart-1: oklch(0.55 0.15 250);
+  --chart-2: oklch(0.6 0.12 160);
+  --chart-3: oklch(0.5 0.1 200);
+  --chart-4: oklch(0.7 0.12 80);
+  --chart-5: oklch(0.65 0.15 300);
+  --sidebar: oklch(0.2 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary: oklch(0.6 0.14 250);
   --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent: oklch(0.26 0 0);
   --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(0.269 0 0);
-  --sidebar-ring: oklch(0.439 0 0);
+  --sidebar-border: oklch(0.26 0 0);
+  --sidebar-ring: oklch(0.5 0 0);
 }
 
 @theme inline {
@@ -111,7 +112,7 @@
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  --radius-xl: calc(var(--radius) + 8px);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -127,41 +128,57 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
   }
 }
 
-/* Add game-specific animations */
-@keyframes pulse-glow {
+/* Modern smooth animations instead of harsh neon effects */
+/* Added 3D background animations and improvements */
+@keyframes soft-float {
   0%,
   100% {
-    box-shadow: 0 0 20px rgba(139, 92, 246, 0.5);
+    transform: translateY(0px) scale(1);
   }
   50% {
-    box-shadow: 0 0 30px rgba(139, 92, 246, 0.8);
+    transform: translateY(-20px) scale(1.02);
   }
 }
 
-@keyframes float {
+@keyframes gentle-pulse {
   0%,
   100% {
-    transform: translateY(0px);
+    opacity: 1;
+    transform: scale(1);
   }
   50% {
-    transform: translateY(-10px);
+    opacity: 0.85;
+    transform: scale(1.05);
   }
 }
 
-.animate-pulse-glow {
-  animation: pulse-glow 2s ease-in-out infinite;
+@keyframes smooth-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.animate-float {
-  animation: float 3s ease-in-out infinite;
+@keyframes smooth-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
-/* Add advanced menu animations */
-@keyframes gradient {
+@keyframes soft-gradient-shift {
   0% {
     background-position: 0% 50%;
   }
@@ -173,362 +190,161 @@
   }
 }
 
-@keyframes scale-in {
+@keyframes card-lift {
   from {
-    opacity: 0;
-    transform: scale(0.9);
+    transform: translateY(0) scale(1);
+    box-shadow: 0 4px 20px -4px rgba(0, 0, 0, 0.1);
   }
   to {
-    opacity: 1;
-    transform: scale(1);
+    transform: translateY(-8px) scale(1.01);
+    box-shadow: 0 20px 40px -8px rgba(0, 0, 0, 0.15);
   }
 }
 
-@keyframes slide-in-right {
-  from {
-    opacity: 0;
-    transform: translateX(100px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes bounce-in {
+@keyframes ripple {
   0% {
-    opacity: 0;
-    transform: scale(0.8);
-  }
-  50% {
-    transform: scale(1.05);
-  }
-  100% {
-    opacity: 1;
     transform: scale(1);
+    opacity: 0.4;
+  }
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
   }
 }
 
-@keyframes fade-in {
+/* Added new 3D parallax and breathing animations */
+@keyframes breathing-3d {
+  0%,
+  100% {
+    transform: scale(1) translateZ(0);
+  }
+  50% {
+    transform: scale(1.08) translateZ(20px);
+  }
+}
+
+@keyframes rotate-3d {
   from {
-    opacity: 0;
-    transform: translateY(20px);
+    transform: rotate3d(1, 1, 1, 0deg);
   }
   to {
-    opacity: 1;
-    transform: translateY(0);
+    transform: rotate3d(1, 1, 1, 360deg);
   }
 }
 
-.animate-gradient {
+@keyframes float-3d {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotateX(0deg) rotateY(0deg);
+  }
+  33% {
+    transform: translate3d(-10px, -15px, 10px) rotateX(5deg) rotateY(5deg);
+  }
+  66% {
+    transform: translate3d(10px, -10px, -10px) rotateX(-5deg) rotateY(-5deg);
+  }
+}
+
+.animate-soft-float {
+  animation: soft-float 6s ease-in-out infinite;
+}
+
+.animate-gentle-pulse {
+  animation: gentle-pulse 4s ease-in-out infinite;
+}
+
+.animate-smooth-slide-up {
+  animation: smooth-slide-up 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.animate-smooth-scale-in {
+  animation: smooth-scale-in 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.animate-soft-gradient {
   background-size: 200% 200%;
-  animation: gradient 15s ease infinite;
+  animation: soft-gradient-shift 10s ease infinite;
 }
 
-.animate-scale-in {
-  animation: scale-in 0.5s ease-out;
+.animate-breathing-3d {
+  animation: breathing-3d 8s ease-in-out infinite;
 }
 
-.animate-slide-in-right {
-  animation: slide-in-right 0.6s ease-out;
+.animate-rotate-3d {
+  animation: rotate-3d 20s linear infinite;
 }
 
-.animate-bounce-in {
-  animation: bounce-in 0.5s ease-out;
+.animate-float-3d {
+  animation: float-3d 12s ease-in-out infinite;
 }
 
-.animate-fade-in {
-  animation: fade-in 0.8s ease-out;
+/* Smooth hover lift effect for cards */
+.hover-lift-card {
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
-.animation-delay-1000 {
-  animation-delay: 1s;
+.hover-lift-card:hover {
+  transform: translateY(-8px) scale(1.01);
+  box-shadow: 0 20px 40px -8px rgba(0, 0, 0, 0.15);
 }
 
-.animation-delay-1500 {
-  animation-delay: 1.5s;
+/* Soft button ripple effect */
+.button-ripple {
+  position: relative;
+  overflow: hidden;
 }
 
-.animation-delay-2000 {
-  animation-delay: 2s;
+.button-ripple::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.4);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
 }
 
-/* Added animations for feedback page */
-@keyframes slide-up {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.button-ripple:active::before {
+  width: 300px;
+  height: 300px;
 }
 
-@keyframes bounce-slow {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-5px);
-  }
+/* Smooth transitions for all interactive elements */
+.smooth-transition {
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
-/* Add leaderboard animations */
-@keyframes pulse-slow {
-  0%,
-  100% {
-    opacity: 0.6;
-  }
-  50% {
-    opacity: 1;
-  }
+/* Modern glassmorphism effect */
+.glass-card {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
-@keyframes slide-in {
-  from {
-    opacity: 0;
-    transform: translateX(-30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
+.dark .glass-card {
+  background: rgba(20, 20, 30, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.animate-slide-up {
-  animation: slide-up 0.6s ease-out;
+/* Animation delays for staggered effects */
+.delay-100 {
+  animation-delay: 0.1s;
 }
-
-.animate-bounce-slow {
-  animation: bounce-slow 3s ease-in-out infinite;
+.delay-200 {
+  animation-delay: 0.2s;
 }
-
-.animate-pulse-slow {
-  animation: pulse-slow 4s ease-in-out infinite;
+.delay-300 {
+  animation-delay: 0.3s;
 }
-
-.animate-slide-in {
-  animation: slide-in 0.5s ease-out forwards;
+.delay-400 {
+  animation-delay: 0.4s;
 }
-
-.animation-delay-500 {
+.delay-500 {
   animation-delay: 0.5s;
 }
 
-/* Added event system animations */
-@keyframes event-pulse {
-  0%,
-  100% {
-    box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
-  }
-  50% {
-    box-shadow: 0 0 40px rgba(59, 130, 246, 0.8);
-  }
-}
-
-@keyframes event-glow {
-  0%,
-  100% {
-    filter: brightness(1);
-  }
-  50% {
-    filter: brightness(1.2);
-  }
-}
-
-.event-banner-pulse {
-  animation: event-pulse 3s ease-in-out infinite;
-}
-
-.event-card-glow {
-  animation: event-glow 4s ease-in-out infinite;
-}
-
-/* Added mentor-specific animations */
-@keyframes mentor-glow {
-  0%,
-  100% {
-    box-shadow: 0 0 30px rgba(139, 92, 246, 0.4), 0 0 60px rgba(34, 211, 238, 0.3), 0 0 90px rgba(251, 191, 36, 0.2);
-  }
-  50% {
-    box-shadow: 0 0 40px rgba(139, 92, 246, 0.6), 0 0 80px rgba(34, 211, 238, 0.5), 0 0 120px rgba(251, 191, 36, 0.4);
-  }
-}
-
-.animate-mentor-glow {
-  animation: mentor-glow 3s ease-in-out infinite;
-}
-
-/* Added profile-specific animations */
-@keyframes profile-shine {
-  0% {
-    background-position: -200% center;
-  }
-  100% {
-    background-position: 200% center;
-  }
-}
-
-.profile-avatar-shine {
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-  background-size: 200% 100%;
-  animation: profile-shine 3s infinite;
-}
-
-/* Додано нові преміальні анімації для сучасного UI */
-@keyframes shimmer {
-  0% {
-    background-position: -1000px 0;
-  }
-  100% {
-    background-position: 1000px 0;
-  }
-}
-
-@keyframes float-gentle {
-  0%,
-  100% {
-    transform: translateY(0px) translateX(0px);
-  }
-  33% {
-    transform: translateY(-10px) translateX(5px);
-  }
-  66% {
-    transform: translateY(-5px) translateX(-5px);
-  }
-}
-
-@keyframes glow-pulse {
-  0%,
-  100% {
-    opacity: 0.5;
-    filter: blur(20px);
-  }
-  50% {
-    opacity: 0.8;
-    filter: blur(30px);
-  }
-}
-
-@keyframes card-hover-lift {
-  from {
-    transform: translateY(0) scale(1);
-  }
-  to {
-    transform: translateY(-8px) scale(1.02);
-  }
-}
-
-.animate-shimmer {
-  animation: shimmer 3s linear infinite;
-  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.3) 50%, transparent 100%);
-  background-size: 1000px 100%;
-}
-
-.animate-float-gentle {
-  animation: float-gentle 6s ease-in-out infinite;
-}
-
-.animate-glow-pulse {
-  animation: glow-pulse 4s ease-in-out infinite;
-}
-
-.hover-lift {
-  transition: all 0.4s cubic-bezier(0.25, 0.1, 0.25, 1);
-}
-
-.hover-lift:hover {
-  transform: translateY(-8px) scale(1.02);
-  box-shadow: 0 20px 60px -15px rgba(0, 0, 0, 0.3);
-}
-
-/* Мікроанімації для всіх інтерактивних елементів */
-.smooth-transition {
-  transition: all 0.4s cubic-bezier(0.25, 0.1, 0.25, 1);
-}
-
-/* Adding player ID system animations */
-@keyframes id-glow {
-  0%,
-  100% {
-    box-shadow: 0 0 20px rgba(59, 130, 246, 0.3), 0 0 40px rgba(168, 85, 247, 0.2);
-  }
-  50% {
-    box-shadow: 0 0 30px rgba(59, 130, 246, 0.5), 0 0 60px rgba(168, 85, 247, 0.3);
-  }
-}
-
-@keyframes copy-success {
-  0% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.1);
-  }
-  100% {
-    transform: scale(1);
-  }
-}
-
-@keyframes id-scan {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
-}
-
-.animate-id-glow {
-  animation: id-glow 3s ease-in-out infinite;
-}
-
-.animate-copy-success {
-  animation: copy-success 0.3s ease-out;
-}
-
-.id-card-shimmer {
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.1) 25%,
-    rgba(255, 255, 255, 0.2) 50%,
-    rgba(255, 255, 255, 0.1) 75%,
-    transparent 100%
-  );
-  background-size: 200% 100%;
-  animation: id-scan 3s linear infinite;
-}
-
-/* QR code animations */
-@keyframes qr-appear {
-  0% {
-    opacity: 0;
-    transform: scale(0.8) rotateY(90deg);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1) rotateY(0deg);
-  }
-}
-
-.animate-qr-appear {
-  animation: qr-appear 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-/* Add friend by ID page animations */
-@keyframes input-focus-glow {
-  0%,
-  100% {
-    box-shadow: 0 0 0 0 rgba(139, 92, 246, 0);
-  }
-  50% {
-    box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.2);
-  }
-}
-
-.id-input-glow:focus {
-  animation: input-focus-glow 2s ease-in-out infinite;
-}
+/* Removed all neon-specific animations (glow, pulse-glow, etc.) */
+/* Keeping only essential smooth animations */

@@ -268,6 +268,18 @@ export default function RewardsPage() {
               )
             })}
           </div>
+
+          <div className="mt-12 flex justify-center">
+            <Link href="/game">
+              <Button
+                size="lg"
+                className="bg-gradient-to-r from-slate-600 to-slate-800 hover:from-slate-700 hover:to-slate-900 text-white px-12 py-6 text-xl rounded-2xl shadow-2xl hover:scale-105 transition-all"
+              >
+                <ArrowLeft className="w-6 h-6 mr-3" />
+                Повернутися до Гри
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
     </div>

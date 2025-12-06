@@ -1,10 +1,13 @@
-import { updateSession } from "@/lib/supabase/middleware"
+// Game now works fully with localStorage, no server-side session management needed
+
 import type { NextRequest } from "next/server"
 
 export async function middleware(request: NextRequest) {
-  return await updateSession(request)
+  // No middleware needed - game uses client-side localStorage only
+  // All auth and game state managed in browser
+  return
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)"],
+  matcher: [],
 }

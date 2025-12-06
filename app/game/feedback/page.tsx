@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent } from "@/components/ui/card"
-import { createClient } from "@/lib/supabase/client"
 import { loadGameState } from "@/lib/game-state"
 import { ArrowLeft, Star, Send, Heart, Sparkles, MessageCircle, TrendingUp } from "lucide-react"
 import { useGameModal } from "@/lib/use-game-modal"
@@ -45,27 +44,8 @@ export default function FeedbackPage() {
   }
 
   const loadFeedbacks = async () => {
-    const supabase = createClient()
-    if (!supabase) {
-      setLoading(false)
-      return
-    }
-
-    try {
-      const { data, error } = await supabase
-        .from("feedback")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(20)
-
-      if (error) throw error
-
-      setFeedbacks(data || [])
-    } catch (error) {
-      console.error("[v0] Error loading feedback:", error)
-    } finally {
-      setLoading(false)
-    }
+    setLoading(false)
+    setFeedbacks([])
   }
 
   const handleSubmit = async () => {
@@ -79,49 +59,7 @@ export default function FeedbackPage() {
       return
     }
 
-    const supabase = createClient()
-    if (!supabase) {
-      showAlert("Для відправки відгуку потрібно увійти в акаунт")
-      return
-    }
-
-    setSubmitting(true)
-
-    try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-
-      if (!user) {
-        showAlert("Для відправки відгуку потрібно увійти в акаунт")
-        setSubmitting(false)
-        return
-      }
-
-      const state = await loadGameState()
-
-      const { error } = await supabase.from("feedback").insert({
-        player_id: user.id,
-        player_name: state?.playerName || "Гравець",
-        player_avatar: state?.skin || "default",
-        rating: rating,
-        message: message.trim(),
-      })
-
-      if (error) throw error
-
-      showSuccess("Дякуємо за твій відгук! Він допомагає покращувати гру! ⭐")
-
-      setMessage("")
-      setRating(0)
-
-      await loadFeedbacks()
-    } catch (error) {
-      console.error("[v0] Error submitting feedback:", error)
-      showAlert("Не вдалося відправити відгук. Спробуй ще раз!")
-    } finally {
-      setSubmitting(false)
-    }
+    showAlert("Функція відгуків тимчасово недоступна. Дякуємо за розуміння!")
   }
 
   const formatDate = (dateString: string) => {

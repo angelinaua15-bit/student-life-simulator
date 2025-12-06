@@ -67,6 +67,9 @@ export default function MentorPage() {
   const [showPhrase, setShowPhrase] = useState(false)
   const [avatarPulse, setAvatarPulse] = useState(false)
 
+  const [interactionsThisLevel, setInteractionsThisLevel] = useState(0)
+  const MAX_INTERACTIONS_PER_LEVEL = 3
+
   useEffect(() => {
     async function initGameState() {
       const state = await loadGameState()
@@ -75,6 +78,12 @@ export default function MentorPage() {
         return
       }
       setGameState(state)
+
+      const mentorEventsThisLevel = state.completedEvents.filter(
+        (id) => id.startsWith("mentor-") && id.includes(`-level-${state.stats.level}`),
+      ).length
+      setInteractionsThisLevel(mentorEventsThisLevel)
+
       setLoading(false)
     }
     initGameState()
@@ -96,6 +105,14 @@ export default function MentorPage() {
 
   const generateNewEvent = () => {
     if (!gameState) return
+
+    if (interactionsThisLevel >= MAX_INTERACTIONS_PER_LEVEL) {
+      showAlert(
+        `Ви вже використали всі поради ментора на цьому рівні (${MAX_INTERACTIONS_PER_LEVEL}/${MAX_INTERACTIONS_PER_LEVEL}).\nПідвищ рівень, щоб отримати нові поради!`,
+        "Ліміт вичерпано",
+      )
+      return
+    }
 
     const event = getRandomEvent(gameState.stats.level, gameState.completedEvents)
 
@@ -133,10 +150,13 @@ export default function MentorPage() {
       updated = addExperience(updated, option.effects.experience)
     }
 
+    const levelSpecificEventId = `${currentEvent.id}-level-${gameState.stats.level}`
     updated = {
       ...updated,
-      completedEvents: [...updated.completedEvents, currentEvent.id],
+      completedEvents: [...updated.completedEvents, levelSpecificEventId],
     }
+
+    setInteractionsThisLevel((prev) => prev + 1)
 
     setGameState(updated)
     await saveGameState(updated)
@@ -202,6 +222,7 @@ export default function MentorPage() {
 
   const mentorMood = getMentorMood(gameState)
   const mentorMessage = getMentorMessage(mentorMood)
+  const remainingInteractions = MAX_INTERACTIONS_PER_LEVEL - interactionsThisLevel
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/5 p-4">
@@ -347,6 +368,21 @@ export default function MentorPage() {
         </div>
 
         <div className="mb-6">
+          <GameCard title="Взаємодії з ментором">
+            <div className="text-center space-y-3">
+              <div className="text-5xl font-bold text-primary">
+                {remainingInteractions}/{MAX_INTERACTIONS_PER_LEVEL}
+              </div>
+              <p className="text-sm text-muted-foreground">
+                {remainingInteractions > 0
+                  ? `Залишилось порад на цьому рівні: ${remainingInteractions}`
+                  : "Підвищ рівень для нових порад!"}
+              </p>
+            </div>
+          </GameCard>
+        </div>
+
+        <div className="mb-6">
           <GameCard title="Твій прогрес">
             <div className="grid grid-cols-3 gap-4">
               <div className="relative group">
@@ -384,13 +420,24 @@ export default function MentorPage() {
         </div>
 
         {!currentEvent ? (
-          <GameCard title="Поговоримо?" glowing>
+          <GameCard title="Поговоримо?" glowing={remainingInteractions > 0}>
             <div className="text-center space-y-6 py-8">
               <div className="text-6xl animate-float">💬</div>
-              <p className="text-lg text-muted-foreground">Ментор готовий поділитися мудрістю та порадами</p>
-              <Button onClick={generateNewEvent} className="w-full h-14 text-lg font-bold" size="lg">
+              <p className="text-lg text-muted-foreground">
+                {remainingInteractions > 0
+                  ? "Ментор готовий поділитися мудрістю та порадами"
+                  : "Ментор чекає на твій новий рівень!"}
+              </p>
+              <Button
+                onClick={generateNewEvent}
+                className="w-full h-14 text-lg font-bold"
+                size="lg"
+                disabled={remainingInteractions <= 0}
+              >
                 <Sparkles className="w-5 h-5 mr-2" />
-                Поговорити з ментором
+                {remainingInteractions > 0
+                  ? `Поговорити з ментором (${remainingInteractions} доступно)`
+                  : "Взаємодії вичерпано на цьому рівні"}
               </Button>
             </div>
           </GameCard>

@@ -196,8 +196,13 @@ export default function CafeGame() {
 
   if (!playing) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/5 p-4">
-        <div className="container mx-auto max-w-2xl py-8">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20 dark:from-slate-950 dark:via-blue-950/20 dark:to-purple-950/10 p-4">
+        <div className="fixed inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute top-20 left-20 w-96 h-96 bg-gradient-to-br from-amber-200/10 to-orange-200/10 rounded-full blur-3xl animate-soft-float" />
+          <div className="absolute bottom-40 right-40 w-[500px] h-[500px] bg-gradient-to-br from-pink-200/10 to-rose-200/10 rounded-full blur-3xl animate-soft-float delay-300" />
+        </div>
+
+        <div className="container mx-auto max-w-2xl py-8 relative z-10">
           <Link href="/game">
             <Button variant="outline" className="mb-4 bg-transparent">
               <ArrowLeft className="w-4 h-4 mr-2" />
@@ -207,7 +212,15 @@ export default function CafeGame() {
 
           <GameCard title="🍵 Кафе" description="Приймай замовлення клієнтів швидко та точно!">
             <div className="space-y-6">
-              <div className="bg-muted/50 p-4 rounded-lg space-y-2">
+              <Button
+                onClick={startGame}
+                className="w-full h-16 text-xl font-bold bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg hover:shadow-xl transition-all hover:scale-[1.02] rounded-2xl"
+                disabled={gameState.stats.energy < 10}
+              >
+                {gameState.stats.energy < 10 ? "Недостатньо енергії (-10 потрібно)" : "🎮 Почати гру (-10 енергії)"}
+              </Button>
+
+              <div className="bg-card/80 backdrop-blur-sm border border-border p-4 rounded-2xl space-y-2">
                 <h3 className="font-bold text-lg">Як грати:</h3>
                 <ul className="text-sm space-y-1 list-disc list-inside text-muted-foreground">
                   <li>Запам'ятай замовлення клієнта (показано вгорі)</li>
@@ -221,12 +234,12 @@ export default function CafeGame() {
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <div className="text-center p-4 bg-accent/10 rounded-lg border-2 border-accent/20">
-                  <div className="text-3xl font-bold text-accent-foreground">{gameState.minigameHighScores.cafe}</div>
+                <div className="text-center p-4 bg-card/80 backdrop-blur-sm rounded-2xl border border-border">
+                  <div className="text-3xl font-bold text-foreground">{gameState.minigameHighScores.cafe}</div>
                   <div className="text-sm text-muted-foreground">Твій рекорд</div>
                 </div>
-                <div className="text-center p-4 bg-warning/10 rounded-lg border-2 border-warning/20">
-                  <div className="text-3xl font-bold text-warning-foreground">{gameState.stats.energy}</div>
+                <div className="text-center p-4 bg-card/80 backdrop-blur-sm rounded-2xl border border-border">
+                  <div className="text-3xl font-bold text-foreground">{gameState.stats.energy}</div>
                   <div className="text-sm text-muted-foreground">Енергія</div>
                 </div>
               </div>
@@ -239,14 +252,6 @@ export default function CafeGame() {
                   <li>+5 щастя, -5 стрес</li>
                 </ul>
               </div>
-
-              <Button
-                onClick={startGame}
-                className="w-full h-14 text-lg font-bold bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-opacity"
-                disabled={gameState.stats.energy < 10}
-              >
-                {gameState.stats.energy < 10 ? "Недостатньо енергії (-10 потрібно)" : "Почати гру (-10 енергії)"}
-              </Button>
             </div>
           </GameCard>
         </div>
@@ -255,9 +260,14 @@ export default function CafeGame() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/5 p-4">
-      <div className="container mx-auto max-w-2xl py-8 space-y-4">
-        <div className="bg-card rounded-lg p-4 shadow-lg border-2 border-primary/10">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20 dark:from-slate-950 dark:via-blue-950/20 dark:to-purple-950/10 p-4">
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-20 left-20 w-96 h-96 bg-gradient-to-br from-amber-200/10 to-orange-200/10 rounded-full blur-3xl animate-soft-float" />
+        <div className="absolute bottom-40 right-40 w-[500px] h-[500px] bg-gradient-to-br from-pink-200/10 to-rose-200/10 rounded-full blur-3xl animate-soft-float delay-300" />
+      </div>
+
+      <div className="container mx-auto max-w-2xl py-8 space-y-4 relative z-10">
+        <div className="sticky top-4 z-10 bg-card rounded-lg p-4 shadow-lg border-2 border-primary/10">
           <div className="grid grid-cols-3 gap-4">
             <div className="text-center">
               <div className="text-3xl font-bold text-primary">{score}</div>
@@ -306,50 +316,52 @@ export default function CafeGame() {
           </GameCard>
         )}
 
-        <GameCard title="Твоє замовлення" className="border-2 border-accent/20">
-          <div className="flex items-center justify-center gap-3 p-6 bg-muted/30 rounded-lg min-h-[100px]">
-            {selectedItems.length === 0 ? (
-              <div className="text-muted-foreground text-center">
-                <div className="text-lg">Вибери позиції внизу ⬇️</div>
-                <div className="text-sm mt-1">Порядок важливий!</div>
-              </div>
-            ) : (
-              selectedItems.map((itemId, idx) => {
-                const item = ITEMS.find((i) => i.id === itemId)
-                if (!item) return null
-                const Icon = item.icon
-                return (
-                  <div key={idx} className="text-center relative">
-                    <div className="absolute -top-2 -left-2 w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xs font-bold">
-                      {idx + 1}
+        <div className="sticky bottom-4 z-10">
+          <GameCard title="Твоє замовлення" className="border-2 border-accent/20 shadow-xl">
+            <div className="flex items-center justify-center gap-3 p-6 bg-muted/30 rounded-lg min-h-[100px]">
+              {selectedItems.length === 0 ? (
+                <div className="text-muted-foreground text-center">
+                  <div className="text-lg">Вибери позиції внизу ⬇️</div>
+                  <div className="text-sm mt-1">Порядок важливий!</div>
+                </div>
+              ) : (
+                selectedItems.map((itemId, idx) => {
+                  const item = ITEMS.find((i) => i.id === itemId)
+                  if (!item) return null
+                  const Icon = item.icon
+                  return (
+                    <div key={idx} className="text-center relative">
+                      <div className="absolute -top-2 -left-2 w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xs font-bold">
+                        {idx + 1}
+                      </div>
+                      <Icon className={`w-12 h-12 ${item.color}`} />
+                      <div className="text-xs mt-1">{item.name}</div>
                     </div>
-                    <Icon className={`w-12 h-12 ${item.color}`} />
-                    <div className="text-xs mt-1">{item.name}</div>
-                  </div>
-                )
-              })
-            )}
-          </div>
-          <div className="flex gap-3 mt-4">
-            <Button
-              onClick={clearSelection}
-              variant="outline"
-              className="flex-1 bg-transparent hover:bg-destructive/10 hover:text-destructive"
-              disabled={selectedItems.length === 0}
-            >
-              <X className="w-4 h-4 mr-2" />
-              Очистити
-            </Button>
-            <Button
-              onClick={submitOrder}
-              className="flex-1 bg-gradient-to-r from-primary to-accent hover:opacity-90"
-              disabled={!currentOrder || selectedItems.length === 0}
-            >
-              <Check className="w-4 h-4 mr-2" />
-              Подати замовлення
-            </Button>
-          </div>
-        </GameCard>
+                  )
+                })
+              )}
+            </div>
+            <div className="flex gap-3 mt-4">
+              <Button
+                onClick={clearSelection}
+                variant="outline"
+                className="flex-1 bg-transparent hover:bg-destructive/10 hover:text-destructive"
+                disabled={selectedItems.length === 0}
+              >
+                <X className="w-4 h-4 mr-2" />
+                Очистити
+              </Button>
+              <Button
+                onClick={submitOrder}
+                className="flex-1 bg-gradient-to-r from-primary to-accent hover:opacity-90"
+                disabled={!currentOrder || selectedItems.length === 0}
+              >
+                <Check className="w-4 h-4 mr-2" />
+                Подати замовлення
+              </Button>
+            </div>
+          </GameCard>
+        </div>
 
         <GameCard title="Меню кафе" className="border-2 border-secondary/20">
           <div className="grid grid-cols-3 gap-4">
