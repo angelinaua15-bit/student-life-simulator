@@ -3,6 +3,7 @@
 import { getStatusForLevel } from "@/lib/rewards-data"
 import { generatePlayerId } from "./player-id-system"
 import { checkAchievements } from "./achievements-tracker"
+import { loadPlayerProfile, syncPlayerProfile } from "./database"
 
 export interface GameStats {
   stress: number
@@ -154,7 +155,19 @@ export async function loadGameState(): Promise<GameState | null> {
     if (saved) {
       const state = JSON.parse(saved)
 
-      // Game now works entirely with localStorage
+      if (state.playerId) {
+        loadPlayerProfile(state.playerId)
+          .then((dbState) => {
+            if (dbState) {
+              // Merge database state with local state (prefer newer data)
+              const merged = { ...state, ...dbState }
+              localStorage.setItem("evo-student-state", JSON.stringify(merged))
+            }
+          })
+          .catch(() => {
+            // Silently fail - continue with localStorage
+          })
+      }
 
       return state
     }
@@ -171,7 +184,9 @@ export async function saveGameState(state: GameState): Promise<void> {
     localStorage.setItem("evo-student-state", JSON.stringify(stateToSave))
   }
 
-  // All game state saved to localStorage only
+  syncPlayerProfile(stateToSave).catch(() => {
+    // Silently fail - game continues with localStorage
+  })
 }
 
 export async function createNewGame(playerName: string, skin = "default"): Promise<GameState> {

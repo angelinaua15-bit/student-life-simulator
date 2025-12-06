@@ -1,7 +1,5 @@
-// Supabase completely disabled to prevent btoa errors with Cyrillic characters
-// Game works entirely with localStorage and mock data
+import { createBrowserClient } from "@supabase/ssr"
 
 export function createClient() {
-  // Always return null - Supabase is disabled
-  return null
+  return createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
 }
