@@ -18,9 +18,7 @@ import {
   Sparkles,
   TrendingUp,
   User,
-  Trophy,
   Gift,
-  Calendar,
   Target,
   MapPin,
   Users,
@@ -363,50 +361,6 @@ export default function GameDashboard() {
                     <div className="font-bold">Квести</div>
                     <div className="text-xs text-muted-foreground">Виконуй завдання</div>
                   </div>
-                </Button>
-              </Link>
-
-              <Link href="/game/events" className="block">
-                <Button
-                  variant="outline"
-                  className="w-full justify-start gap-3 h-auto py-4 hover:scale-105 transition-transform bg-gradient-to-r from-blue-500/10 to-cyan-500/10 hover:from-blue-500/20 hover:to-cyan-500/20"
-                >
-                  <Calendar className="w-5 h-5 text-blue-500" />
-                  <div className="text-left">
-                    <div className="font-bold">Події та Акції</div>
-                    <div className="text-xs text-muted-foreground">Спеціальні бонуси</div>
-                  </div>
-                </Button>
-              </Link>
-
-              <Link href="/game/leaderboard" className="block">
-                <Button
-                  variant="outline"
-                  className="w-full justify-start gap-3 h-auto py-4 hover:scale-105 transition-transform bg-gradient-to-r from-yellow-500/10 to-orange-500/10 hover:from-yellow-500/20 hover:to-orange-500/20"
-                >
-                  <Trophy className="w-5 h-5 text-yellow-500" />
-                  <div className="text-left">
-                    <div className="font-bold">Таблиця Лідерів</div>
-                    <div className="text-xs text-muted-foreground">Переглянь найкращих</div>
-                  </div>
-                </Button>
-              </Link>
-
-              <Link href="/game/rewards" className="block">
-                <Button
-                  variant="outline"
-                  className="w-full justify-start gap-3 h-auto py-4 hover:scale-105 transition-transform bg-gradient-to-r from-purple-500/10 to-pink-500/10 hover:from-purple-500/20 hover:to-pink-500/20"
-                >
-                  <Gift className="w-5 h-5 text-purple-500" />
-                  <div className="text-left">
-                    <div className="font-bold">Мої Нагороди</div>
-                    <div className="text-xs text-muted-foreground">Твої досягнення</div>
-                  </div>
-                  {gameState.unclaimedRewards && gameState.unclaimedRewards.length > 0 && (
-                    <div className="ml-auto w-6 h-6 bg-red-500 rounded-full flex items-center justify-center text-white text-xs font-bold animate-pulse">
-                      {gameState.unclaimedRewards.length}
-                    </div>
-                  )}
                 </Button>
               </Link>
             </div>

@@ -3,6 +3,7 @@
 import { getStatusForLevel } from "@/lib/rewards-data"
 import { generatePlayerId } from "./player-id-system"
 import { checkAchievements } from "./achievements-tracker"
+import { syncPlayerProfile, loadPlayerProfile } from "./database"
 
 export interface GameStats {
   stress: number
@@ -154,7 +155,20 @@ export async function loadGameState(): Promise<GameState | null> {
     if (saved) {
       const state = JSON.parse(saved)
 
-      // Database sync disabled to avoid RLS policy errors
+      // Try to load from database if available
+      try {
+        const dbState = await loadPlayerProfile(state.playerId)
+        if (dbState) {
+          console.log("[v0] Loaded game state from database")
+          // Merge with localStorage (localStorage takes priority for recent changes)
+          const merged = { ...dbState, ...state }
+          localStorage.setItem("evo-student-state", JSON.stringify(merged))
+          return merged
+        }
+      } catch (error) {
+        console.log("[v0] Could not load from database, using localStorage")
+      }
+
       return state
     }
   }
@@ -170,7 +184,10 @@ export async function saveGameState(state: GameState): Promise<void> {
     localStorage.setItem("evo-student-state", JSON.stringify(stateToSave))
   }
 
-  // localStorage only to avoid RLS errors
+  // Sync to database in background (don't await to avoid blocking)
+  syncPlayerProfile(stateToSave).catch((error) => {
+    console.log("[v0] Background sync failed, game continues with localStorage")
+  })
 }
 
 export async function createNewGame(playerName: string, skin = "default"): Promise<GameState> {
@@ -195,7 +212,11 @@ export async function createNewGame(playerName: string, skin = "default"): Promi
     localStorage.setItem("evo-student-state", JSON.stringify(newState))
   }
 
-  // localStorage only
+  // Sync to database in background
+  syncPlayerProfile(newState).catch((error) => {
+    console.log("[v0] Initial sync failed, game continues with localStorage")
+  })
+
   return newState
 }
 

@@ -121,12 +121,24 @@ export default function ShadowStudentPage() {
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-black text-white p-4">
       <div className="container mx-auto max-w-4xl">
         <header className="mb-8">
-          <Link href="/game">
-            <Button variant="ghost" className="mb-4 text-white hover:bg-white/10">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Назад до Гри
-            </Button>
-          </Link>
+          <div className="flex items-center justify-between mb-4">
+            <Link href="/game">
+              <Button variant="ghost" className="text-white hover:bg-white/10">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Назад до Гри
+              </Button>
+            </Link>
+
+            <Link href="/game">
+              <Button
+                variant="outline"
+                className="bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-700 hover:to-gray-800 border-gray-600"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Вийти
+              </Button>
+            </Link>
+          </div>
 
           <div className="text-center space-y-2">
             <motion.h1
@@ -280,7 +292,7 @@ export default function ShadowStudentPage() {
                 </div>
 
                 <p className="text-gray-400 max-w-md mx-auto">
-                  Тінь студента спостерігає за тобою з темряви. Готовий прийняти виклик від свого альтер-его?
+                  Тінь студента спостерігає за тобою з темряви. Готовий прийняти виклик від свого альтер-ego?
                 </p>
 
                 <div className="flex gap-4 justify-center">
