@@ -1,5 +1,9 @@
 import { loadGameState } from "@/lib/game-state"
-import { searchPlayers as dbSearchPlayers, sendFriendRequest as dbSendFriendRequest } from "@/lib/database"
+import {
+  searchPlayers as dbSearchPlayers,
+  sendFriendRequest as dbSendFriendRequest,
+  getFriendsList as dbGetFriendsList,
+} from "@/lib/database"
 
 export interface PlayerProfile {
   id: string
@@ -75,15 +79,17 @@ function generateMockPlayers(count: number): PlayerProfile[] {
 
 // Search for players - now uses database
 export async function searchPlayers(query: string): Promise<PlayerProfile[]> {
-  console.log("[v0] Searching players (using mock data)")
-  const results: PlayerProfile[] = []
+  try {
+    const results = await dbSearchPlayers(query)
 
-  if (results.length > 0) {
-    console.log("[v0] Found players in database:", results.length)
-    return results
+    if (results.length > 0) {
+      return results
+    }
+  } catch (error) {
+    console.error("Database search failed, using mock data")
   }
 
-  console.log("[v0] No database results, using mock data")
+  // Fallback to mock data
   const mockPlayers = generateMockPlayers(12)
 
   if (query && query.trim().length > 0) {
@@ -99,11 +105,13 @@ export async function searchPlayers(query: string): Promise<PlayerProfile[]> {
 
 // Get recommended players
 export async function getRecommendedPlayers(): Promise<PlayerProfile[]> {
-  console.log("[v0] Getting recommended players (using mock data)")
-  const results: PlayerProfile[] = []
-
-  if (results.length > 0) {
-    return results.slice(0, 6)
+  try {
+    const results = await dbSearchPlayers("")
+    if (results.length > 0) {
+      return results.slice(0, 6)
+    }
+  } catch (error) {
+    console.error("Database load failed, using mock data")
   }
 
   return generateMockPlayers(6)
@@ -111,11 +119,13 @@ export async function getRecommendedPlayers(): Promise<PlayerProfile[]> {
 
 // Get active players
 export async function getActivePlayers(): Promise<PlayerProfile[]> {
-  console.log("[v0] Getting active players (using mock data)")
-  const results: PlayerProfile[] = []
-
-  if (results.length > 0) {
-    return results.slice(0, 8)
+  try {
+    const results = await dbSearchPlayers("")
+    if (results.length > 0) {
+      return results.slice(0, 8)
+    }
+  } catch (error) {
+    console.error("Database load failed, using mock data")
   }
 
   return generateMockPlayers(8)
@@ -136,14 +146,17 @@ export async function sendFriendRequest(receiverId: string): Promise<{ success: 
 export async function getFriends(): Promise<Friendship[]> {
   const gameState = await loadGameState()
   if (!gameState?.playerId) {
-    console.log("[v0] No user ID, returning empty friends list")
     return []
   }
 
-  console.log("[v0] Loading friends (database disabled, using mock data)")
-  const friends: Friendship[] = []
-  console.log("[v0] Loaded friends:", friends.length)
-  return friends
+  try {
+    // Try to get user ID and load from database
+    const friends = await dbGetFriendsList(gameState.playerId)
+    return friends
+  } catch (error) {
+    console.error("Failed to load friends from database")
+    return []
+  }
 }
 
 // Stub functions that need database implementation

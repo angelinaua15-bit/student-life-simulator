@@ -40,6 +40,60 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="uk">
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              // UTF-8 compatible btoa/atob - must run BEFORE any modules
+              (function() {
+                if (typeof window === 'undefined') return;
+                
+                const originalBtoa = window.btoa;
+                const originalAtob = window.atob;
+                
+                window.btoa = function(str) {
+                  try {
+                    return originalBtoa(str);
+                  } catch (e) {
+                    try {
+                      // Convert UTF-8 to Latin1-compatible format
+                      const encoder = new TextEncoder();
+                      const utf8Array = encoder.encode(str);
+                      let binaryString = '';
+                      for (let i = 0; i < utf8Array.length; i++) {
+                        binaryString += String.fromCharCode(utf8Array[i]);
+                      }
+                      return originalBtoa(binaryString);
+                    } catch (err) {
+                      console.warn('[btoa] UTF-8 encoding failed, returning empty string');
+                      return '';
+                    }
+                  }
+                };
+                
+                window.atob = function(base64) {
+                  try {
+                    const binaryString = originalAtob(base64);
+                    try {
+                      const bytes = new Uint8Array(binaryString.length);
+                      for (let i = 0; i < binaryString.length; i++) {
+                        bytes[i] = binaryString.charCodeAt(i);
+                      }
+                      const decoder = new TextDecoder();
+                      return decoder.decode(bytes);
+                    } catch (e) {
+                      return binaryString;
+                    }
+                  } catch (err) {
+                    console.warn('[atob] Decoding failed, returning empty string');
+                    return '';
+                  }
+                };
+              })();
+            `,
+          }}
+        />
+      </head>
       <body className={`font-sans antialiased`}>
         <Premium3DBackground />
         {children}

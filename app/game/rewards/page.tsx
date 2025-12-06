@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { loadGameState, saveGameState, type GameState } from "@/lib/game-state"
-import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, Gift, Lock, CheckCircle } from "lucide-react"
 import Link from "next/link"
@@ -31,31 +30,21 @@ export default function RewardsPage() {
     }
     setGameState(state)
 
-    const supabase = createClient()
-    if (!supabase) {
-      setLoading(false)
-      return
-    }
-
+    const { getLevelRewards } = await import("@/lib/database")
     try {
-      const { data, error } = await supabase.from("level_rewards").select("*").order("level", { ascending: true })
-
-      if (error) {
-        console.error("[v0] Error loading rewards:", error)
-      } else {
-        const formattedRewards: Reward[] = (data || []).map((r: any) => ({
-          id: r.id,
-          level: r.level,
-          rewardType: r.reward_type,
-          rewardValue: typeof r.reward_value === "string" ? JSON.parse(r.reward_value) : r.reward_value,
-          rewardName: r.reward_name,
-          rewardDescription: r.reward_description,
-          rarity: r.rarity,
-        }))
-        setRewards(formattedRewards)
-      }
+      const data = await getLevelRewards()
+      const formattedRewards: Reward[] = (data || []).map((r: any) => ({
+        id: r.id,
+        level: r.level,
+        rewardType: r.reward_type,
+        rewardValue: typeof r.reward_value === "string" ? JSON.parse(r.reward_value) : r.reward_value,
+        rewardName: r.reward_name,
+        rewardDescription: r.reward_description,
+        rarity: r.rarity,
+      }))
+      setRewards(formattedRewards)
     } catch (error) {
-      console.error("[v0] Error:", error)
+      console.error("Error loading rewards:", error)
     } finally {
       setLoading(false)
     }

@@ -1,11 +1,10 @@
-// Game now works fully with localStorage, no server-side session management needed
-
 import type { NextRequest } from "next/server"
+import { NextResponse } from "next/server"
 
 export async function middleware(request: NextRequest) {
-  // No middleware needed - game uses client-side localStorage only
-  // All auth and game state managed in browser
-  return
+  // No auth middleware needed - game uses localStorage only
+  // Just pass through all requests
+  return NextResponse.next()
 }
 
 export const config = {
