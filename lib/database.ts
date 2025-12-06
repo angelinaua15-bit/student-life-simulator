@@ -150,47 +150,38 @@ export async function searchPlayers(query: string): Promise<PlayerProfile[]> {
 
     const { data, error } = await supabase
       .from("player_profiles")
-      .select("player_id, nickname, skin, level, status, bio, faculty")
-      .or(`nickname.ilike.%${query}%,player_id.ilike.%${query}%`)
+      .select("id, player_id, nickname, skin, level, status, bio, faculty, is_online, last_online")
+      .or(`username_lowercase.ilike.%${query.toLowerCase()}%,player_id.ilike.%${query}%`)
       .limit(20)
 
-    if (error || !data) return []
-
-    return data.map((player) => ({
-      id: player.player_id,
-      name: player.nickname,
-      avatar: player.skin,
-      level: player.level,
-      status: player.status,
-      bio: player.bio,
-      faculty: player.faculty,
-      friendshipLevel: 0,
-    }))
-  } catch (err) {
-    return []
-  }
-}
-
-export async function sendFriendRequest(
-  senderId: string,
-  receiverId: string,
-): Promise<{ success: boolean; error?: string }> {
-  try {
-    const supabase = createClient()
-
-    const { error } = await supabase.from("friend_requests").insert({
-      sender_id: senderId,
-      receiver_id: receiverId,
-      status: "pending",
-    })
-
     if (error) {
-      return { success: false, error: error.message }
+      console.error("[v0] Database search error:", error)
+      return []
     }
 
-    return { success: true }
+    if (!data) return []
+
+    return data.map((player) => ({
+      id: player.id,
+      player_id: player.player_id,
+      nickname: player.nickname,
+      level: player.level,
+      status: player.status || "Студент",
+      skin: player.skin || "default",
+      bio: player.bio || "",
+      faculty: player.faculty || "",
+      group: "",
+      is_online: player.is_online || false,
+      last_online: player.last_online || new Date().toISOString(),
+      total_play_time: 0,
+      achievements: [],
+      cafe_high_score: 0,
+      library_high_score: 0,
+      care_packages_high_score: 0,
+    }))
   } catch (err) {
-    return { success: false, error: "Помилка підключення до бази даних" }
+    console.error("[v0] Search error:", err)
+    return []
   }
 }
 
@@ -234,5 +225,28 @@ export async function getLevelRewards() {
     return data
   } catch (err) {
     return []
+  }
+}
+
+export async function sendFriendRequest(
+  senderId: string,
+  receiverId: string,
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const supabase = createClient()
+
+    const { error } = await supabase.from("friend_requests").insert({
+      sender_id: senderId,
+      receiver_id: receiverId,
+      status: "pending",
+    })
+
+    if (error) {
+      return { success: false, error: error.message }
+    }
+
+    return { success: true }
+  } catch (err) {
+    return { success: false, error: "Помилка підключення до бази даних" }
   }
 }

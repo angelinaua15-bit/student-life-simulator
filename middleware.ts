@@ -1,12 +1,10 @@
+import { updateSession } from "@/lib/supabase/proxy"
 import type { NextRequest } from "next/server"
-import { NextResponse } from "next/server"
 
 export async function middleware(request: NextRequest) {
-  // No auth middleware needed - game uses localStorage only
-  // Just pass through all requests
-  return NextResponse.next()
+  return await updateSession(request)
 }
 
 export const config = {
-  matcher: [],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)"],
 }
