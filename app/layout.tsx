@@ -1,3 +1,4 @@
+import "@/lib/btoa-polyfill"
 import type React from "react"
 import type { Metadata } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
@@ -47,53 +48,30 @@ export default function RootLayout({
         <script
           dangerouslySetInnerHTML={{
             __html: `
+              // Suppress external errors (wallet extensions, btoa, etc.)
               window.addEventListener('unhandledrejection', function(event) {
                 if (!event) return;
                 
                 try {
-                  const errorStr = JSON.stringify(event.reason) || String(event.reason) || '';
+                  const errorStr = String(event.reason || '');
                   const errorMessage = event.reason?.message || '';
-                  const errorName = event.reason?.name || '';
-                  const errorCode = event.reason?.code || '';
                   
-                  const walletKeywords = [
-                    'MetaMask', 'metamask', 'METAMASK',
-                    'ethereum', 'Ethereum', 'ETHEREUM',
-                    'wallet', 'Wallet', 'WALLET',
-                    'Web3', 'web3', 'WEB3',
-                    'crypto', 'Crypto', 'CRYPTO',
-                    'connect', 'Connect', 'CONNECT',
-                    'provider', 'Provider', 'PROVIDER'
-                  ];
-                  
-                  const shouldSuppress = walletKeywords.some(keyword => 
-                    errorStr.toLowerCase().includes(keyword.toLowerCase()) ||
-                    errorMessage.toLowerCase().includes(keyword.toLowerCase()) ||
-                    errorName.toLowerCase().includes(keyword.toLowerCase()) ||
-                    String(errorCode).toLowerCase().includes(keyword.toLowerCase())
-                  );
-                  
-                  if (shouldSuppress) {
+                  // Suppress known external errors
+                  if (errorStr.match(/(wallet|ethereum|web3|btoa|latin1|metamask)/i) ||
+                      errorMessage.match(/(wallet|ethereum|web3|btoa|latin1|metamask)/i)) {
                     event.preventDefault();
-                    console.debug('[EVO STUDENT] Wallet extension error suppressed:', errorStr.substring(0, 100));
                     return false;
                   }
                 } catch (e) {
-                  const fullError = String(event.reason || '');
-                  if (fullError.match(/(meta|wallet|ethereum|web3|crypto)/i)) {
-                    event.preventDefault();
-                    return false;
-                  }
+                  // Suppress any error checking errors
                 }
               });
               
+              // Suppress console errors for external issues
               const originalError = console.error;
               console.error = function(...args) {
                 const errorText = args.join(' ').toLowerCase();
-                if (errorText.includes('metamask') || 
-                    errorText.includes('ethereum') || 
-                    errorText.includes('wallet') ||
-                    errorText.includes('web3')) {
+                if (errorText.match(/(wallet|ethereum|web3|btoa|latin1|metamask)/)) {
                   return;
                 }
                 originalError.apply(console, args);

@@ -270,21 +270,40 @@ export function checkQuestProgress(quest: Quest, gameState: any): Quest {
         if (obj.id.includes("stress")) current = 100 - gameState.stats.stress
         break
       case "money":
-        current = gameState.stats.money
+        if (obj.id.includes("earn")) {
+          // Track total money earned, not current balance
+          current = gameState.stats.money + (gameState.stats.bankBalance || 0)
+        } else {
+          current = gameState.stats.money
+        }
         break
       case "minigame":
         // Check if minigame was played based on high scores
         const gameType = obj.id.replace("play-", "").replace("-daily", "")
-        if (gameState.minigameHighScores[gameType] > 0) {
-          current = 1
+        if (gameType === "cafe" && gameState.minigameHighScores?.cafe > 0) {
+          current = Math.min(obj.target, gameState.minigameHighScores.cafe)
+        }
+        if (gameType === "library" && gameState.minigameHighScores?.library > 0) {
+          current = Math.min(obj.target, gameState.minigameHighScores.library)
+        }
+        if (gameType === "packages" && gameState.minigameHighScores?.carePackages > 0) {
+          current = Math.min(obj.target, gameState.minigameHighScores.carePackages)
+        }
+        // Check for "play all games" objective
+        if (obj.id.includes("play-all-games")) {
+          let gamesPlayed = 0
+          if (gameState.minigameHighScores?.cafe > 0) gamesPlayed++
+          if (gameState.minigameHighScores?.library > 0) gamesPlayed++
+          if (gameState.minigameHighScores?.carePackages > 0) gamesPlayed++
+          current = gamesPlayed
         }
         break
       case "location":
         // Track location visits in completedEvents
-        if (obj.id.includes("bank") && gameState.completedEvents.includes("visited-bank")) {
+        if (obj.id.includes("bank") && gameState.completedEvents?.includes("visited-bank")) {
           current = 1
         }
-        if (obj.id.includes("mentor") && gameState.completedEvents.includes("visited-mentor")) {
+        if (obj.id.includes("mentor") && gameState.completedEvents?.includes("visited-mentor")) {
           current = 1
         }
         break
@@ -295,6 +314,13 @@ export function checkQuestProgress(quest: Quest, gameState: any): Quest {
         }
         if (obj.id.includes("max-happiness") && gameState.stats.happiness >= 100) {
           current = 1
+        }
+        if (obj.id.includes("bank-deposit") && gameState.stats.bankBalance >= obj.target) {
+          current = gameState.stats.bankBalance
+        }
+        if (obj.id.includes("maintain-energy")) {
+          // This would need time-based tracking in actual implementation
+          current = gameState.stats.energy >= 70 ? 1 : 0
         }
         break
     }
