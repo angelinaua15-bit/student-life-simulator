@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { loadGameState, saveGameState, createNewGame, type GameState, updateStats } from "@/lib/game-state"
+import { loadGameState, saveGameState, type GameState, updateStats } from "@/lib/game-state"
 import { GameCard } from "@/components/game-card"
 import { Button } from "@/components/ui/button"
 import { EventBanner } from "@/components/event-banner"
@@ -29,6 +29,7 @@ import {
 import Link from "next/link"
 import { useGameModal } from "@/lib/use-game-modal"
 import { checkAchievements } from "@/lib/achievements-tracker"
+import { getCurrentUser, getUserProfile } from "@/lib/auth-actions"
 
 export default function GameDashboard() {
   const router = useRouter()
@@ -40,26 +41,88 @@ export default function GameDashboard() {
     const loadAndAutoSave = async () => {
       console.log("[v0] Loading game state...")
 
-      const currentUser = localStorage.getItem("evo_student_current_user")
-      if (!currentUser) {
-        console.log("[v0] No user logged in, redirecting to main page")
-        router.push("/")
+      const user = await getCurrentUser()
+      const profile = await getUserProfile()
+
+      if (!user || !profile) {
+        console.log("[v0] No user logged in, redirecting to login")
+        router.push("/auth/login")
         return
       }
 
-      let saved = await loadGameState()
-
-      if (!saved) {
-        console.log("[v0] No saved game found, creating new game")
-        const user = JSON.parse(currentUser)
-        saved = await createNewGame(user.nickname || "Student", user.skin || "default")
+      const gameStateFromProfile: GameState = {
+        playerId: profile.player_id || profile.id,
+        playerName: profile.nickname || "Student",
+        stats: {
+          stress: profile.stress || 30,
+          happiness: profile.happiness || 70,
+          energy: profile.energy || 80,
+          money: profile.coins || 100,
+          bankBalance: profile.bank_balance || 0,
+          level: profile.level || 1,
+          experience: profile.experience || 0,
+          experienceToNext: Math.floor(100 * Math.pow(1.5, (profile.level || 1) - 1)),
+        },
+        completedEvents: profile.completed_events || [],
+        achievements: profile.achievements || [],
+        inventory: profile.inventory || [],
+        lastPlayed: Date.now(),
+        totalPlayTime: profile.total_play_time || 0,
+        minigameHighScores: {
+          cafe: profile.cafe_high_score || 0,
+          library: profile.library_high_score || 0,
+          carePackages: profile.care_packages_high_score || 0,
+        },
+        settings: {
+          soundEnabled: profile.sound_enabled ?? true,
+          musicEnabled: profile.music_enabled ?? true,
+          language: profile.language || "ua",
+          graphicsQuality: profile.graphics_quality || "high",
+        },
+        skin: profile.skin || "default",
+        status: profile.status || "Новачок",
+        bio: profile.bio || "",
+        faculty: profile.faculty || "",
+        group: profile.group || "",
+        social: profile.social || "",
+        unclaimedRewards: profile.unclaimed_rewards || [],
+        activeBoosters: profile.active_boosters || [],
+        personalityType: profile.personality_type || "default",
+        eventCompletions: profile.event_completions || {},
+        claimedEventRewards: profile.claimed_event_rewards || [],
+        polytechnic3DProgress: {
+          completedQuests: profile.polytechnic3d_completed_quests || [],
+          collectedItems: profile.polytechnic3d_collected_items || [],
+          visitedRooms: profile.polytechnic3d_visited_rooms || [],
+        },
+        skills: profile.skills || {
+          charisma: 0,
+          communication: 0,
+          resilience: 0,
+          creativity: 0,
+          agility: 0,
+          success: 0,
+        },
+        friends: profile.friends || [],
+        innerVoiceHistory: profile.inner_voice_history || [],
+        shadowStudent: {
+          initialized: profile.shadow_student_initialized || false,
+          challengesWon: profile.shadow_student_challenges_won || 0,
+          challengesLost: profile.shadow_student_challenges_lost || 0,
+          lastEncounter: profile.shadow_student_last_encounter || 0,
+          currentChallengeId: profile.shadow_student_current_challenge_id,
+        },
+        lastInterestClaim: profile.last_interest_claim || undefined,
       }
 
-      console.log("[v0] Game state loaded:", { level: saved.stats.level, money: saved.stats.money })
+      console.log("[v0] Game state loaded from Supabase:", {
+        level: gameStateFromProfile.stats.level,
+        money: gameStateFromProfile.stats.money,
+      })
 
-      await saveGameState(saved)
+      await saveGameState(gameStateFromProfile)
 
-      const { newAchievements, updatedState } = checkAchievements(saved)
+      const { newAchievements, updatedState } = checkAchievements(gameStateFromProfile)
       if (newAchievements.length > 0) {
         for (const achievement of newAchievements) {
           setTimeout(() => {
@@ -72,16 +135,14 @@ export default function GameDashboard() {
         setGameState(updatedState)
         await saveGameState(updatedState)
       } else {
-        setGameState(saved)
+        setGameState(gameStateFromProfile)
       }
 
       setLoading(false)
 
-      // Auto-save every 5 seconds
       const interval = setInterval(async () => {
         const current = await loadGameState()
         if (current) {
-          // Passive energy recovery
           let updated = updateStats(current, {
             energy: Math.min(100, current.stats.energy + 0.5),
             stress: Math.max(0, current.stats.stress - 0.3),
@@ -125,7 +186,6 @@ export default function GameDashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20 dark:from-slate-950 dark:via-blue-950/20 dark:to-purple-950/10 relative overflow-hidden">
-      {/* Soft 3D floating background shapes */}
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute top-20 left-20 w-96 h-96 bg-gradient-to-br from-blue-200/15 to-cyan-200/15 rounded-full blur-3xl animate-soft-float" />
         <div className="absolute bottom-40 right-40 w-[500px] h-[500px] bg-gradient-to-br from-purple-200/15 to-pink-200/15 rounded-full blur-3xl animate-soft-float delay-300" />
@@ -187,7 +247,6 @@ export default function GameDashboard() {
                 </Button>
               </div>
 
-              {/* Added Stats button to navigation */}
               <Link href="/game/stats" className="block">
                 <Button
                   variant="outline"
@@ -367,7 +426,6 @@ export default function GameDashboard() {
           </div>
 
           <div className="lg:col-span-2 space-y-8">
-            {/* Profile Section */}
             <div className="relative group cursor-pointer">
               <GameCard
                 className="bg-gradient-to-br from-blue-500/10 via-purple-500/10 to-pink-500/10 backdrop-blur-xl border-2 border-white/40 hover:border-purple-400/60 transition-all duration-500 hover:scale-105 rounded-3xl shadow-2xl overflow-hidden"
@@ -405,7 +463,6 @@ export default function GameDashboard() {
               <div className="absolute -inset-4 bg-gradient-to-br from-blue-500/20 via-purple-500/20 to-pink-500/20 rounded-3xl blur-2xl -z-10 opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
 
-            {/* Friends Section */}
             <div>
               <div className="text-2xl font-bold mb-4 flex items-center gap-2">
                 <Users className="w-6 h-6 text-pink-500" />
@@ -456,7 +513,6 @@ export default function GameDashboard() {
               </div>
             </div>
 
-            {/* Mini-games Section */}
             <div>
               <div className="text-2xl font-bold mb-4 flex items-center gap-2">
                 <Sparkles className="w-6 h-6 text-primary" />
@@ -574,7 +630,6 @@ export default function GameDashboard() {
               </div>
             </div>
 
-            {/* Locations Section */}
             <div>
               <div className="text-2xl font-bold mb-4 flex items-center gap-2">
                 <Building2 className="w-6 h-6 text-secondary" />

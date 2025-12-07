@@ -3,7 +3,7 @@
 import { getStatusForLevel } from "@/lib/rewards-data"
 import { generatePlayerId } from "./player-id-system"
 import { checkAchievements } from "./achievements-tracker"
-import { loadPlayerProfile, syncPlayerProfile } from "./database"
+import { getUserProfile } from "./auth-actions"
 
 export interface GameStats {
   stress: number
@@ -151,25 +151,84 @@ const DEFAULT_STATE: GameState = {
 
 export async function loadGameState(): Promise<GameState | null> {
   if (typeof window !== "undefined") {
+    try {
+      const profile = await getUserProfile()
+      if (profile) {
+        const state: GameState = {
+          playerId: profile.player_id || profile.id,
+          playerName: profile.nickname || "Student",
+          stats: {
+            stress: profile.stress || 30,
+            happiness: profile.happiness || 70,
+            energy: profile.energy || 80,
+            money: profile.coins || 100,
+            bankBalance: profile.bank_balance || 0,
+            level: profile.level || 1,
+            experience: profile.experience || 0,
+            experienceToNext: Math.floor(100 * Math.pow(1.5, (profile.level || 1) - 1)),
+          },
+          completedEvents: profile.completed_events || [],
+          achievements: profile.achievements || [],
+          inventory: profile.inventory || [],
+          lastPlayed: Date.now(),
+          totalPlayTime: profile.total_play_time || 0,
+          minigameHighScores: {
+            cafe: profile.cafe_high_score || 0,
+            library: profile.library_high_score || 0,
+            carePackages: profile.care_packages_high_score || 0,
+          },
+          settings: {
+            soundEnabled: profile.sound_enabled ?? true,
+            musicEnabled: profile.music_enabled ?? true,
+            language: profile.language || "ua",
+            graphicsQuality: profile.graphics_quality || "high",
+          },
+          skin: profile.skin || "default",
+          status: profile.status || "Новачок",
+          bio: profile.bio || "",
+          faculty: profile.faculty || "",
+          group: profile.group || "",
+          social: profile.social || "",
+          unclaimedRewards: profile.unclaimed_rewards || [],
+          activeBoosters: profile.active_boosters || [],
+          personalityType: profile.personality_type || "default",
+          eventCompletions: profile.event_completions || {},
+          claimedEventRewards: profile.claimed_event_rewards || [],
+          polytechnic3DProgress: {
+            completedQuests: profile.polytechnic3d_completed_quests || [],
+            collectedItems: profile.polytechnic3d_collected_items || [],
+            visitedRooms: profile.polytechnic3d_visited_rooms || [],
+          },
+          skills: profile.skills || {
+            charisma: 0,
+            communication: 0,
+            resilience: 0,
+            creativity: 0,
+            agility: 0,
+            success: 0,
+          },
+          friends: profile.friends || [],
+          innerVoiceHistory: profile.inner_voice_history || [],
+          shadowStudent: {
+            initialized: profile.shadow_student_initialized || false,
+            challengesWon: profile.shadow_student_challenges_won || 0,
+            challengesLost: profile.shadow_student_challenges_lost || 0,
+            lastEncounter: profile.shadow_student_last_encounter || 0,
+            currentChallengeId: profile.shadow_student_current_challenge_id,
+          },
+          lastInterestClaim: profile.last_interest_claim || undefined,
+        }
+
+        localStorage.setItem("evo-student-state", JSON.stringify(state))
+        return state
+      }
+    } catch (error) {
+      console.error("[v0] Error loading from Supabase, falling back to localStorage:", error)
+    }
+
     const saved = localStorage.getItem("evo-student-state")
     if (saved) {
-      const state = JSON.parse(saved)
-
-      if (state.playerId) {
-        loadPlayerProfile(state.playerId)
-          .then((dbState) => {
-            if (dbState) {
-              // Merge database state with local state (prefer newer data)
-              const merged = { ...state, ...dbState }
-              localStorage.setItem("evo-student-state", JSON.stringify(merged))
-            }
-          })
-          .catch(() => {
-            // Silently fail - continue with localStorage
-          })
-      }
-
-      return state
+      return JSON.parse(saved)
     }
   }
 
@@ -184,9 +243,12 @@ export async function saveGameState(state: GameState): Promise<void> {
     localStorage.setItem("evo-student-state", JSON.stringify(stateToSave))
   }
 
-  syncPlayerProfile(stateToSave).catch(() => {
-    // Silently fail - game continues with localStorage
-  })
+  try {
+    const { syncGameStateToSupabase } = await import("./database-actions")
+    await syncGameStateToSupabase(stateToSave)
+  } catch (error) {
+    console.error("[v0] Failed to sync to Supabase:", error)
+  }
 }
 
 export async function createNewGame(playerName: string, skin = "default"): Promise<GameState> {
