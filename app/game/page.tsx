@@ -120,23 +120,7 @@ export default function GameDashboard() {
         money: gameStateFromProfile.stats.money,
       })
 
-      await saveGameState(gameStateFromProfile)
-
-      const { newAchievements, updatedState } = checkAchievements(gameStateFromProfile)
-      if (newAchievements.length > 0) {
-        for (const achievement of newAchievements) {
-          setTimeout(() => {
-            showAlert(
-              `🎉 Досягнення розблоковано!\n\n${achievement.icon} ${achievement.title}\n${achievement.description}\n\n+${achievement.reward.xp} XP, +${achievement.reward.money} грн`,
-              "Нове Досягнення!",
-            )
-          }, 500)
-        }
-        setGameState(updatedState)
-        await saveGameState(updatedState)
-      } else {
-        setGameState(gameStateFromProfile)
-      }
+      
 
       setLoading(false)
 
@@ -148,17 +132,7 @@ export default function GameDashboard() {
             stress: Math.max(0, current.stats.stress - 0.3),
           })
 
-          const { newAchievements: newAch, updatedState: achState } = checkAchievements(updated)
-          if (newAch.length > 0) {
-            updated = achState
-            for (const achievement of newAch) {
-              showAlert(
-                `🎉 Досягнення розблоковано!\n\n${achievement.icon} ${achievement.title}\n${achievement.description}\n\n+${achievement.reward.xp} XP, +${achievement.reward.money} грн`,
-                "Нове Досягнення!",
-              )
-            }
-          }
-
+         
           setGameState(updated)
           await saveGameState(updated)
         }
